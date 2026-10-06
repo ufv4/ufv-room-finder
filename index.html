@@ -1,0 +1,2513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>UFV Room Finder</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --ink:#1d241f;
+  --muted:#687069;
+  --line:#d5dad6;
+  --page:#fff;
+  --free:#2f8f4e;
+  --free-soft:#eef7f0;
+  --busy:#b94747;
+  --busy-soft:#faeeee;
+  --selected:#245b9e
+}
+html{background:var(--page)}
+body{
+  margin:0;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--ink);
+  background:var(--page)
+}
+button,select,input{font:inherit}
+button,select,input{border-radius:0}
+.app{width:min(1500px,100%);margin:0 auto;padding:24px 24px 40px}
+.hero{margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.eyebrow{
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-size:.72rem;
+  font-weight:700;
+  color:#4f5b53;
+  margin:0 0 5px
+}
+h1{font-size:clamp(1.7rem,4vw,2.45rem);margin:0;line-height:1.05;font-weight:750}
+.subtitle{color:var(--muted);margin:7px 0 0}
+.last-updated{margin:4px 0 0;color:#687069;font-size:.78rem;font-style:italic;line-height:1.35}
+.header-note{
+  margin:10px 0 0;
+  max-width:1000px;
+  color:#5f6861;
+  font-size:.76rem;
+  line-height:1.5
+}
+.header-note p{margin:0}
+.header-note-link{margin-top:8px!important}
+.header-note a{
+  color:#245b9e;
+  text-decoration:underline;
+  text-underline-offset:2px;
+  overflow-wrap:anywhere
+}
+.header-note a:hover{text-decoration-thickness:2px}
+.mobile-disclaimer{display:none}
+
+.local-test-panel{
+  border-bottom:1px solid var(--line);
+  padding:0 0 18px;
+  margin-bottom:22px
+}
+.local-test-panel[hidden]{display:none}
+.local-test-files{display:flex;gap:12px;flex-wrap:wrap}
+.local-test-files label{display:grid;gap:5px;font-size:.76rem;font-weight:700;color:#4b554e}
+.local-test-panel input{font:inherit;font-size:.8rem;max-width:100%}
+.local-plan-status{
+  display:block;
+  margin-top:8px;
+  color:#5f6861;
+  font-size:.74rem;
+  line-height:1.4
+}
+
+.controls-panel{
+  padding:0 0 20px;
+  margin-bottom:22px;
+  border-bottom:1px solid var(--line)
+}
+.controls{
+  display:flex;
+  align-items:start;
+  gap:12px;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  padding-bottom:2px
+}
+.controls label{
+  display:grid;
+  gap:5px;
+  font-size:.76rem;
+  font-weight:700;
+  color:#4b554e;
+  flex:0 0 auto
+}
+.controls select,.controls input{
+  min-height:40px;
+  border:1px solid #aeb6b0;
+  padding:7px 9px;
+  background:#fff;
+  color:var(--ink);
+  min-width:130px
+}
+.controls .day-date-input{
+  min-width:155px;
+  width:155px
+}
+.day-control .day-nav-buttons{
+  display:flex;
+  gap:6px;
+  margin-top:6px
+}
+.day-nav-btn{
+  appearance:none;
+  width:32px;
+  height:32px;
+  min-width:32px;
+  padding:0;
+  border:1px solid #aeb5b0;
+  border-radius:0;
+  background:#fff;
+  color:var(--ink);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font:inherit;
+  font-size:1rem;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer
+}
+.day-nav-btn:disabled{
+  opacity:.45;
+  cursor:default
+}
+.controls select:focus,.controls input:focus,.time-sub-button:focus,.room-list-button:focus{
+  outline:2px solid #7da1c9;
+  outline-offset:1px
+}
+.time-control,.filter-control{display:grid;gap:6px;align-content:start;flex:0 0 auto}
+.time-control label,.filter-control>label:first-child{display:grid}
+.room-search-row{
+  display:flex;
+  align-items:stretch;
+  width:220px;
+  max-width:100%;
+  min-height:32px;
+  box-sizing:border-box;
+  border:1px solid #8d9590;
+  background:#fff
+}
+.room-search-row:focus-within{
+  border-color:#185aa5
+}
+.room-search-input{
+  appearance:none;
+  -webkit-appearance:none;
+  min-height:30px!important;
+  width:auto;
+  min-width:0!important;
+  flex:1 1 auto;
+  box-sizing:border-box;
+  border:0!important;
+  border-radius:0!important;
+  outline:none!important;
+  background:transparent!important;
+  padding:5px 7px!important;
+  font-size:.8rem
+}
+.room-search-input::-webkit-search-cancel-button{
+  -webkit-appearance:none;
+  appearance:none
+}
+.room-search-clear{
+  appearance:none;
+  flex:0 0 30px;
+  width:30px;
+  min-width:30px;
+  min-height:30px;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:#66706a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:Arial,sans-serif;
+  font-size:1.05rem;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer
+}
+.room-search-clear:hover,.room-search-clear:focus{
+  color:#185aa5;
+  outline:none
+}
+.room-search-clear:disabled{
+  opacity:.32;
+  cursor:default
+}
+.vacant-only-toggle{
+  display:flex!important;
+  grid-template-columns:none!important;
+  align-items:center;
+  gap:6px!important;
+  min-height:32px;
+  font-size:.76rem!important;
+  font-weight:650!important;
+  color:#4b554e!important;
+  cursor:pointer
+}
+.controls .vacant-only-toggle input{
+  min-width:0;
+  min-height:0;
+  width:15px;
+  height:15px;
+  padding:0;
+  margin:0
+}
+.time-sub-button{
+  min-height:32px;
+  padding:5px 9px;
+  border:1px solid #9da7a0;
+  background:#fff;
+  cursor:pointer;
+  font-weight:650;
+  white-space:nowrap;
+  font-size:.8rem
+}
+.time-sub-button:hover{background:#f0f1ef}
+.time-sub-button:disabled{opacity:.45;cursor:not-allowed}
+
+.workspace{
+  background:transparent;
+  border:0;
+  padding:0;
+  margin-bottom:26px
+}
+.workspace-heading{margin-bottom:14px}
+.workspace-heading h2{margin:0;font-size:1.16rem;font-weight:720}
+.workspace-subrow{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:18px;
+  margin-top:7px;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line)
+}
+.workspace-help-group{display:grid;gap:8px;justify-items:start;min-width:0}
+.workspace-help{margin:0;color:var(--muted);font-size:.8rem;font-weight:400}
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  margin:0;
+  padding:0;
+  color:#525d55;
+  font-size:.8rem;
+  justify-content:flex-end;
+  text-align:right;
+  flex:0 0 auto
+}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend-box{
+  width:12px;
+  height:12px;
+  border:1px solid #626b65;
+  display:inline-block
+}
+.legend-box.free{background:rgba(47,143,78,.68)}
+.legend-box.occupied{background:rgba(185,71,71,.72)}
+.legend-box.closed{background:rgba(110,120,114,.30);border-style:dashed}
+.map-legend{
+  margin-top:12px;
+  padding-top:0;
+  justify-content:flex-end;
+  text-align:right
+}
+.map-legend[hidden]{display:none}
+
+.workspace-body{
+  display:grid;
+  grid-template-columns:220px minmax(0,1fr);
+  gap:16px;
+  align-items:start
+}
+.room-sidebar{
+  border-right:1px solid var(--line);
+  padding-right:12px
+}
+.room-summary{
+  padding:0 4px 9px;
+  margin-bottom:5px;
+  border-bottom:1px solid var(--line);
+  color:#59615c;
+  font-size:.78rem;
+  line-height:1.45
+}
+.room-summary-line+ .room-summary-line{margin-top:6px}
+.status-count{font-weight:650}
+.status-free{color:#216f3c;font-weight:650}
+.status-occupied{color:#9b3434;font-weight:650}
+.status-closed{font-weight:650}
+.status-unknown{font-weight:650}
+.room-list{display:grid;gap:2px}
+.search-empty{
+  padding:7px 4px 10px;
+  color:#59615c;
+  font-size:.78rem
+}
+.building-list-item,.floor-list-item{
+  display:grid;
+  margin-bottom:5px;
+  border-bottom:1px solid #e4e7e4
+}
+.navigation-list-item{
+  cursor:pointer
+}
+.navigation-list-item:hover{
+  background:#e9ebe8
+}
+.navigation-list-item:focus{
+  outline:1px solid #8ba8c8;
+  outline-offset:-1px
+}
+.navigation-list-item .room-list-button{
+  pointer-events:none
+}
+.navigation-list-item .room-list-button:hover{
+  background:transparent
+}
+.building-expansion{
+  margin:0 4px 0 24px;
+  padding:3px 0 8px 0;
+  color:#59615c;
+  font-size:.76rem;
+  line-height:1.45
+}
+.building-expansion div+div{margin-top:2px}
+.floor-list-details{
+  margin:0 4px 0 24px;
+  padding:3px 0 8px;
+  color:#59615c;
+  font-size:.76rem;
+  line-height:1.45
+}
+.floor-list-details div+div{margin-top:2px}
+.all-floors-grid{
+  --floor-cols:2;
+  display:grid;
+  grid-template-columns:repeat(var(--floor-cols),minmax(0,1fr));
+  gap:18px;
+  align-items:start
+}
+.all-floors-grid[hidden]{display:none}
+.floor-plan-card{
+  display:grid;
+  gap:6px;
+  border:0;
+  background:transparent;
+  padding:0;
+  margin:0;
+  color:var(--ink);
+  text-align:left;
+  cursor:pointer;
+  min-width:0
+}
+.floor-plan-card:hover .floor-plan-preview,
+.floor-plan-card:focus .floor-plan-preview{
+  outline:2px solid #185aa5;
+  outline-offset:2px
+}
+.floor-plan-card:focus{outline:none}
+.floor-plan-preview{
+  display:block;
+  width:100%;
+  height:auto;
+  max-height:260px;
+  object-fit:contain;
+  object-position:center;
+  background:#fff;
+  border:1px solid #c8ceca
+}
+.floor-plan-label{
+  font-size:.82rem;
+  font-weight:700;
+  text-align:center
+}
+.room-list-button{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border:0;
+  background:transparent;
+  padding:6px 4px;
+  text-align:left;
+  cursor:pointer;
+  color:var(--ink);
+  font-weight:680
+}
+.room-list-button:hover{background:#e9ebe8}
+.room-list-button.selected{
+  background:#e5ebf2;
+  outline:1px solid #8ba8c8;
+  outline-offset:-1px
+}
+.room-list-button.room-entry{align-items:flex-start}
+.room-list-button.room-entry .room-status-square{margin-top:3px}
+.room-list-text{
+  display:grid;
+  gap:2px;
+  min-width:0
+}
+.room-list-name{line-height:1.25}
+.room-list-until{
+  font-size:.72rem;
+  line-height:1.25;
+  font-weight:400
+}
+.room-list-until.free{color:#216f3c}
+.room-list-until.busy{color:#9b3434}
+.room-list-until.closed{color:#59615c}
+.room-list-until.unknown{color:#59615c}
+.room-status-square{
+  width:11px;
+  height:11px;
+  flex:0 0 auto;
+  border:1px solid rgba(0,0,0,.18)
+}
+.room-status-square.free{background:var(--free)}
+.room-status-square.busy{background:var(--busy)}
+.room-status-square.closed{background:#838a85}
+.room-status-square.unknown{background:rgba(24,90,165,.22);border-color:#185aa5}
+
+.map-area{min-width:0}
+.map-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:8px;
+  margin:0 0 8px
+}
+#overlayToggleWrap{margin-left:auto}
+.map-back-button{margin-right:25px}
+.map-zoom-step{
+  appearance:none;
+  width:32px;
+  height:32px;
+  min-width:32px;
+  padding:0;
+  border:1px solid #aeb5b0;
+  border-radius:0;
+  background:#fff;
+  color:var(--ink);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font:inherit;
+  font-size:1rem;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer
+}
+.map-zoom-step:hover,.map-zoom-step:focus{
+  border-color:#185aa5;
+  outline:none
+}
+.map-zoom-step:disabled{
+  opacity:.45;
+  cursor:default
+}
+.map-toolbar[hidden]{display:none}
+.map-action-button{
+  appearance:none;
+  border:1px solid #aeb5b0;
+  border-radius:0;
+  background:#fff;
+  color:var(--ink);
+  font:inherit;
+  font-size:.78rem;
+  font-weight:650;
+  min-width:100px;
+  min-height:32px;
+  padding:6px 12px;
+  cursor:pointer
+}
+.map-action-button:hover,.map-action-button:focus{border-color:#185aa5;outline:none}
+.map-action-button:disabled{opacity:.45;cursor:default}
+.map-overlay-toggle{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-height:32px;
+  padding:0 2px;
+  font-size:.76rem;
+  font-weight:650;
+  color:#4b554e;
+  cursor:pointer
+}
+.map-overlay-toggle input{
+  width:15px;
+  height:15px;
+  margin:0;
+  padding:0
+}
+.map-overlay-toggle[hidden]{display:none}
+.map-frame{
+  position:relative;
+  overflow:hidden;
+  background:#fff;
+  border:1px solid #c8ceca;
+  touch-action:none;
+  cursor:grab;
+  user-select:none
+}
+.map-frame.dragging{cursor:grabbing}
+.map-floating-zoom-pad{
+  position:absolute;
+  top:8px;
+  right:8px;
+  z-index:6;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:4px;
+  touch-action:manipulation
+}
+.map-floating-zoom-pad[hidden]{display:none!important}
+.map-floating-zoom-btn{
+  appearance:none;
+  width:30px;
+  height:30px;
+  min-width:30px;
+  padding:0;
+  border:1px solid rgba(91,101,94,.62);
+  border-radius:0;
+  background:rgba(255,255,255,.72);
+  color:var(--ink);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font:inherit;
+  font-size:.95rem;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+  box-shadow:0 1px 3px rgba(0,0,0,.10);
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+  touch-action:manipulation
+}
+.map-floating-zoom-btn:hover,.map-floating-zoom-btn:focus{
+  border-color:#185aa5;
+  background:rgba(255,255,255,.94);
+  outline:none
+}
+.map-floating-zoom-btn:disabled{opacity:.38;cursor:default}
+.map-frame-home{min-width:0}
+body.map-fullscreen-open{overflow:hidden}
+.map-fullscreen{
+  position:fixed;
+  inset:0;
+  z-index:200;
+  display:flex;
+  flex-direction:column;
+  background:#fff
+}
+.map-fullscreen[hidden]{display:none!important}
+.map-fullscreen-toolbar{
+  flex:0 0 auto;
+  min-height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:9px 12px;
+  border-bottom:1px solid #c8ceca;
+  background:#fff
+}
+.map-fullscreen-title{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:.86rem;
+  font-weight:720
+}
+.map-fullscreen-controls{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:7px;
+  flex:0 0 auto
+}
+.map-fullscreen-zoom-controls{display:flex;align-items:center;gap:6px}
+.map-fullscreen-canvas{
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  overflow:hidden;
+  background:#fff
+}
+.map-fullscreen .map-frame{
+  width:100%;
+  height:100%!important;
+  border:0
+}
+.map-fullscreen .map-overlay-toggle{white-space:nowrap}
+.map-pan-stage{
+  position:relative;
+  width:100%;
+  transform-origin:0 0
+}
+.map-pan-stage img{
+  display:block;
+  width:100%;
+  height:auto;
+  max-width:none;
+  image-rendering:auto;
+  pointer-events:none
+}
+.map-pan-stage svg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%
+}
+.room-shape{
+  stroke:#303a33;
+  stroke-width:1.5;
+  vector-effect:non-scaling-stroke;
+  cursor:pointer
+}
+.room-shape.free{fill:rgba(47,143,78,.52)}
+.room-shape.occupied,.room-shape.busy{fill:rgba(185,71,71,.58)}
+.room-shape.closed{fill:rgba(110,120,114,.30);stroke-dasharray:7 5}
+.room-shape.unknown{fill:rgba(24,90,165,.16);stroke:#185aa5;stroke-width:2.5}
+.room-shape.selected{stroke:var(--selected);stroke-width:4}
+.room-shape:hover{stroke:#185aa5;stroke-width:4}
+.room-shape:focus{outline:none;stroke:#0a3f82;stroke-width:5}
+.building-shape{fill:rgba(24,90,165,.16);stroke:#185aa5;stroke-width:2.5;vector-effect:non-scaling-stroke;cursor:pointer}
+.building-shape:hover,.building-shape:focus{fill:rgba(24,90,165,.25);stroke-width:4;outline:none}
+.building-link-square{width:11px;height:11px;flex:0 0 auto;border:1px solid #185aa5;background:rgba(24,90,165,.22)}
+
+.details-panel{
+  margin-top:0;
+  padding:20px 0 0;
+  border-top:1px solid var(--line)
+}
+.details-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:start;
+  gap:18px;
+  margin-bottom:10px
+}
+.details-top h2{font-size:1.16rem;margin:0}
+.details-top p{margin:4px 0 0;color:var(--muted);font-size:.86rem}
+.selected-room-heading{margin-bottom:10px}
+.selected-date{
+  font-weight:650;
+  color:var(--ink)!important;
+  font-size:.88rem!important
+}
+
+.event-list{
+  display:grid;
+  gap:0;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line)
+}
+.event-row{
+  display:grid;
+  grid-template-columns:minmax(150px,210px) 1fr;
+  gap:14px;
+  padding:10px 8px;
+  border-bottom:1px solid #e4e7e4;
+  font-size:.86rem;
+  align-items:center
+}
+.event-row:last-child{border-bottom:0}
+.event-row.free-row{background:var(--free-soft)}
+.event-row.busy-row{background:var(--busy-soft)}
+.event-row.closed-row{background:#ededeb}
+.event-row.unknown-row{background:#f3f3f2}
+.event-time{font-weight:720}
+.event-name.free{color:#216f3c;font-weight:700}
+.event-name.busy{color:#8f3434}
+.event-name.closed{color:#59615c;font-weight:700}
+.event-name.unknown{color:#676d69;font-weight:700}
+.empty{color:var(--muted);font-style:italic;font-size:.84rem}
+.day-card{border:0;padding:0}
+
+@media(max-width:900px){
+  .all-floors-grid{--floor-cols:2!important}
+  .controls{flex-wrap:wrap;overflow-x:visible}
+  .controls>label,.time-control,.filter-control{flex:1 1 145px}
+  .controls select,.controls input{width:100%;min-width:0}
+  .workspace-body{grid-template-columns:155px minmax(0,1fr)}
+}
+@media(max-width:560px){
+  .all-floors-grid{--floor-cols:1!important}
+  .floor-plan-preview{max-height:220px}
+  .map-action-button{padding:5px 8px}
+  .app{padding:14px 12px 28px}
+  .local-test-panel{padding-bottom:14px}
+  .workspace-subrow{align-items:flex-start;flex-direction:column}
+  .legend{justify-content:flex-start;text-align:left}
+  .workspace-body{grid-template-columns:1fr}
+  .room-sidebar{border-right:0;border-bottom:1px solid var(--line);padding:0 0 10px}
+  .room-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .details-panel{padding-top:16px}
+  .details-top{flex-direction:column}
+  .event-row{grid-template-columns:115px 1fr;gap:8px}
+}
+
+
+.mobile-options-header,.mobile-nav-bar{display:none}
+.controls .mobile-overlay-option{display:none!important}
+.mobile-options-header h2{margin:0;font-size:1.16rem}
+.mobile-options-done,.mobile-nav-button{
+  appearance:none;
+  border:1px solid #aeb5b0;
+  border-radius:0;
+  background:#fff;
+  color:var(--ink);
+  font:inherit;
+  font-size:.82rem;
+  font-weight:700;
+  min-height:40px;
+  padding:7px 12px;
+  cursor:pointer
+}
+.mobile-options-done:disabled,.mobile-nav-button:disabled{opacity:.45;cursor:default}
+.mobile-checkbox-row{display:flex!important;align-items:center;gap:7px!important;min-height:40px;width:max-content;max-width:100%;font-size:.76rem;font-weight:700;color:#4b554e;cursor:pointer}
+.mobile-checkbox-row input{width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;margin:0;padding:0;flex:0 0 16px}
+
+@media(min-width:701px){
+  /* Parent control gap is 7px; +25px makes the visible gap from − to Close exactly 32px,
+     matching one desktop square zoom button. */
+  .map-fullscreen #fullscreenCloseBtn{margin-left:25px}
+}
+@media(max-width:700px){
+  .app{padding:12px 12px 82px}
+  .hero{margin-bottom:12px}
+  .hero .header-note{display:none}
+  .hero .subtitle{margin-bottom:0}
+  .mobile-disclaimer{
+    display:none;
+    margin:24px 0 0;
+    padding:16px 0 2px;
+    border-top:1px solid var(--line);
+    color:#5f6861;
+    font-size:.76rem;
+    line-height:1.5
+  }
+  .mobile-disclaimer p{margin:0}
+  .mobile-disclaimer .header-note-link{margin-top:8px!important}
+  .mobile-disclaimer a{
+    color:#245b9e;
+    text-decoration:underline;
+    text-underline-offset:2px;
+    overflow-wrap:anywhere
+  }
+  .app[data-mobile-view="map"] .mobile-disclaimer,
+  .app[data-mobile-view="list"] .mobile-disclaimer{display:block}
+
+  .controls-panel{display:none;margin:0;padding:0;border:0}
+  .mobile-options-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin:0 0 16px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--line)
+  }
+  .app[data-mobile-view="options"] .mobile-overlay-option{display:grid!important;order:-1}
+  .app[data-mobile-view="options"] .hero{display:none!important}
+  .app[data-mobile-view="options"] .controls-panel{display:block}
+  .app[data-mobile-view="options"] .controls{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:14px;
+    overflow:visible;
+    padding:0
+  }
+  .app[data-mobile-view="options"] .controls>label,
+  .app[data-mobile-view="options"] .time-control,
+  .app[data-mobile-view="options"] .filter-control,
+  .app[data-mobile-view="options"] .mobile-overlay-option{width:100%;max-width:none;flex:none}
+  .app[data-mobile-view="options"] .controls select,
+  .app[data-mobile-view="options"] .controls input{width:100%;min-width:0}
+  .app[data-mobile-view="options"] .vacant-only-toggle{
+    display:flex!important;
+    align-items:center;
+    justify-content:flex-start;
+    gap:8px!important;
+    width:max-content!important;
+    max-width:100%;
+    min-height:32px;
+    margin-top:8px
+  }
+  .app[data-mobile-view="options"] .vacant-only-toggle input{
+    width:16px!important;
+    height:16px!important;
+    min-width:16px!important;
+    min-height:16px!important;
+    flex:0 0 16px;
+    margin:0!important;
+    padding:0!important
+  }
+  .app[data-mobile-view="options"] .vacant-only-toggle span{
+    display:inline-block;
+    line-height:1.25;
+    white-space:nowrap
+  }
+  .app[data-mobile-view="options"] .day-control .day-date-input{width:100%}
+  .app[data-mobile-view="options"] .workspace,
+  .app[data-mobile-view="options"] .details-panel{display:none!important}
+
+  .workspace{margin-bottom:10px}
+  .workspace-heading{margin-bottom:10px}
+  .workspace-heading h2{font-size:1rem;line-height:1.35}
+  .workspace-subrow{margin-top:5px;padding-bottom:8px}
+  .workspace-help{font-size:.76rem}
+  .workspace-body{display:block}
+  .map-toolbar{display:none!important}
+  .map-frame{position:relative}
+  .map-floating-zoom-btn{
+    width:30px;
+    height:30px;
+    min-width:30px;
+    background:rgba(255,255,255,.72)
+  }
+  .room-sidebar{border:0;padding:0}
+  .room-list{grid-template-columns:1fr!important}
+  .map-area{width:100%;min-width:0}
+  .map-legend{justify-content:flex-start;text-align:left}
+  .floor-plan-preview{max-height:none}
+
+  .app[data-mobile-view="map"] .room-sidebar{display:none}
+  .app[data-mobile-view="map"] .map-area{display:block}
+  .app[data-mobile-view="map"] .room-search-row{display:none}
+
+  .app[data-mobile-view="list"] .room-sidebar{display:block}
+  .app[data-mobile-view="list"] .map-area{display:none}
+  .app[data-mobile-view="list"] .room-search-row{display:flex}
+  .app[data-mobile-view="list"] .workspace-help{display:none}
+
+  .app[data-mobile-view="map"] .details-panel,
+  .app[data-mobile-view="list"] .details-panel{display:none!important}
+
+  .app[data-mobile-view="room"] .controls-panel,
+  .app[data-mobile-view="room"] .workspace{display:none!important}
+  .app[data-mobile-view="room"] .details-panel{
+    display:block!important;
+    border-top:0;
+    padding-top:0;
+    margin-top:0
+  }
+  .app[data-mobile-view="room"] .details-top{margin-top:0}
+  .app[data-mobile-view="room"] .event-row{grid-template-columns:105px minmax(0,1fr);gap:8px;padding:10px 6px}
+
+  .mobile-nav-bar{
+    position:fixed;
+    z-index:50;
+    left:0;
+    right:0;
+    bottom:0;
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:6px;
+    padding:8px max(10px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+    border-top:1px solid #c8ceca;
+    background:#fff;
+    box-shadow:0 -2px 8px rgba(0,0,0,.06)
+  }
+  .mobile-nav-bar[hidden]{display:none!important}
+  .mobile-nav-button{
+    min-width:0;
+    width:100%;
+    padding:7px 5px;
+    font-size:.76rem;
+    white-space:nowrap
+  }
+  #mobileBackBtn{grid-column:1}
+  #mobileViewToggleBtn{grid-column:2}
+  #mobileOptionsBtn{grid-column:3}
+  #mobileFullscreenBtn{grid-column:4}
+  .map-fullscreen-toolbar{display:contents}
+  .map-fullscreen-title{
+    order:1;
+    flex:0 0 auto;
+    display:block;
+    width:100%;
+    box-sizing:border-box;
+    padding:10px max(10px,env(safe-area-inset-right)) 10px max(10px,env(safe-area-inset-left));
+    border-bottom:1px solid #c8ceca;
+    background:#fff;
+    font-size:.76rem;
+    line-height:1.3;
+    white-space:normal;
+    overflow:visible;
+    text-overflow:clip
+  }
+  .map-fullscreen-canvas{order:2}
+  .map-fullscreen-controls{
+    order:3;
+    flex:0 0 auto;
+    width:100%;
+    box-sizing:border-box;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:8px max(10px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+    border-top:1px solid #c8ceca;
+    background:#fff;
+    box-shadow:0 -2px 8px rgba(0,0,0,.06)
+  }
+  .map-fullscreen-zoom-controls{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex:0 0 auto;
+    order:1
+  }
+  .map-fullscreen #fullscreenMapZoomInBtn,
+  .map-fullscreen #fullscreenMapZoomOutBtn{
+    min-width:40px;
+    width:40px;
+    height:40px;
+    min-height:40px;
+    padding:0;
+    box-sizing:border-box;
+    flex:0 0 40px
+  }
+  .map-fullscreen .map-overlay-toggle{
+    order:2;
+    min-width:0;
+    width:auto;
+    height:40px;
+    min-height:40px;
+    box-sizing:border-box;
+    justify-content:flex-start;
+    padding:4px 2px;
+    font-size:.68rem;
+    line-height:1.08;
+    text-align:left;
+    white-space:nowrap;
+    flex:0 1 auto
+  }
+  .map-fullscreen #fullscreenCloseBtn{
+    order:3;
+    min-width:84px;
+    width:84px;
+    height:40px;
+    min-height:40px;
+    margin-left:auto;
+    padding:7px 5px;
+    box-sizing:border-box;
+    font-size:.76rem;
+    flex:0 0 84px
+  }
+  .map-fullscreen .map-floating-zoom-pad{display:none!important}
+  .mobile-nav-button[hidden]{display:none!important}
+}
+</style>
+</head>
+<body>
+<main class="app">
+<header class="hero"><div><h1>UFV Room Finder</h1><p class="subtitle">View campus floor plans, find available rooms, and see scheduled room bookings.</p><p id="lastUpdated" class="last-updated">Last updated: —</p><div class="header-note"><p>This project provides a simple way to view UFV campus maps/floor plans, find available rooms, and see scheduled room bookings. It uses data from UFV's <a href="https://roombookings.ufv.ca/Portal" target="_blank" rel="noopener noreferrer">Room Bookings Portal</a> and campus maps/floor plans from UFV's <a href="https://www.ufv.ca/operations/maps/" target="_blank" rel="noopener noreferrer">Maps and Floor Plans</a> page. While efforts are made to ensure data used is accurate and up to date, information may be incomplete, outdated, or incorrect, and may not reflect last-minute changes, cancellations, closures, or unscheduled use. This is an unofficial, independently created tool and is not an official UFV service.</p><p class="header-note-link">UFV Room Bookings page: <a href="https://www.ufv.ca/registrar/schedule-rooms/room-bookings/" target="_blank" rel="noopener noreferrer">https://www.ufv.ca/registrar/schedule-rooms/room-bookings/</a></p></div></div></header>
+<section id="localTestPanel" class="local-test-panel" hidden>
+  <div class="local-test-files">
+    <label><span>Abbotsford schedule JSON</span><input id="localScheduleFileAB" type="file" accept=".json,application/json" aria-label="Choose Abbotsford searchResByOccurrence.json"></label>
+    <label><span>Chilliwack schedule JSON</span><input id="localScheduleFileCEP" type="file" accept=".json,application/json" aria-label="Choose Chilliwack searchResByOccurrence.json"></label>
+    <label><span>Campus/floor-plan PNGs</span><input id="localPlanFiles" type="file" accept=".png,image/png" multiple aria-label="Choose all campus and floor-plan PNG files"></label>
+  </div>
+  <span id="localPlanStatus" class="local-plan-status">For local testing, choose all PNGs used by this index.html.</span>
+</section>
+<section class="controls-panel">
+<div class="mobile-options-header"><h2>Options</h2><button id="mobileOptionsDoneBtn" class="mobile-options-done" type="button">Save</button></div>
+<div class="controls">
+<label><span>Campus</span><select id="campusSelect"><option value="AB" selected>Abbotsford</option><option value="CEP">Chilliwack</option></select></label>
+<label><span>Building</span><select id="buildingSelect"></select></label>
+<label><span>Floor</span><select id="floorSelect"></select></label>
+<div class="filter-control"><label><span>Room type</span><select id="roomFilterSelect"><option value="all">All rooms</option><option value="classrooms">Classrooms</option><option value="labs">Labs</option><option value="meetings">Meeting Rooms</option></select></label><label class="vacant-only-toggle"><input id="vacantOnlyInput" type="checkbox"> <span>Show vacant only</span></label></div>
+<label class="day-control"><span>Day</span><input id="daySelect" class="day-date-input" type="date" step="1" aria-label="Day"><span class="day-nav-buttons"><button id="prevDayBtn" class="day-nav-btn" type="button" aria-label="Previous day">←</button><button id="nextDayBtn" class="day-nav-btn" type="button" aria-label="Next day">→</button></span></label>
+<div class="time-control"><label><span>Start time</span><input id="timeInput" type="time" step="60"></label><button id="nowBtn" class="time-sub-button" type="button">Today and Now</button></div>
+<div class="time-control"><label><span>End time</span><input id="endTimeInput" type="time" step="60"></label><button id="noEndBtn" class="time-sub-button" type="button">No End Time</button></div>
+<div class="mobile-overlay-option"><label class="mobile-checkbox-row"><input id="mobileShowMapOverlaysInput" type="checkbox" checked> <span>Show map overlays</span></label></div>
+</div></section>
+<section class="workspace">
+  <div class="workspace-heading">
+    <h2 id="workspaceTitle">Building A, Main Floor</h2>
+    <div class="workspace-subrow">
+      <div class="workspace-help-group">
+        <p id="workspaceHelp" class="workspace-help">Click a room from the map or the list to view the full room availability for the selected day.</p>
+        <div class="room-search-row"><input id="roomSearchInput" class="room-search-input" type="search" placeholder="Search rooms" aria-label="Search rooms" autocomplete="off"><button id="clearRoomSearchBtn" class="room-search-clear" type="button" aria-label="Clear room search" title="Clear search">×</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="workspace-body">
+    <aside class="room-sidebar">
+      <div id="roomSummary" class="room-summary"></div>
+      <div id="roomList" class="room-list"></div>
+    </aside>
+    <div class="map-area">
+      <div id="mapToolbar" class="map-toolbar"><button id="backBtn" class="map-action-button map-back-button" type="button" disabled>Back</button><span id="mapZoomControls" hidden style="display:none!important" aria-hidden="true"></span><label id="overlayToggleWrap" class="map-overlay-toggle"><input id="showMapOverlaysInput" type="checkbox" checked> <span>Show map overlays</span></label><button id="fullscreenMapBtn" class="map-action-button" type="button">Full screen</button></div>
+      <div id="mapFrameHome" class="map-frame-home"><div id="singleMapFrame" class="map-frame" aria-label="Interactive floor plan. Scroll or pinch to zoom; drag to pan.">
+        <div id="mapPanStage" class="map-pan-stage"><img id="floorImage" alt=""><svg id="roomOverlay" aria-label="Interactive room map"></svg></div>
+        <div id="mapFloatingZoomPad" class="map-floating-zoom-pad" hidden><button id="mapFloatingZoomInBtn" class="map-floating-zoom-btn" type="button" aria-label="Zoom in" title="Zoom in">+</button><button id="mapFloatingZoomOutBtn" class="map-floating-zoom-btn" type="button" aria-label="Zoom out" title="Zoom out" disabled>−</button></div>
+      </div></div>
+      <div id="allFloorsGrid" class="all-floors-grid" hidden></div>
+      <div id="mapLegend" class="legend map-legend"><span><i class="legend-box free"></i>Vacant</span><span><i class="legend-box occupied"></i>Booked</span><span><i class="legend-box closed"></i>Closed</span></div>
+    </div>
+  </div>
+</section>
+<section id="detailsPanel" class="details-panel" aria-live="polite" hidden></section>
+<div class="mobile-disclaimer" aria-label="UFV Room Finder disclaimer"><p>This project provides a simple way to view UFV campus maps/floor plans, find available rooms, and see scheduled room bookings. It uses data from UFV's <a href="https://roombookings.ufv.ca/Portal" target="_blank" rel="noopener noreferrer">Room Bookings Portal</a> and campus maps/floor plans from UFV's <a href="https://www.ufv.ca/operations/maps/" target="_blank" rel="noopener noreferrer">Maps and Floor Plans</a> page. While efforts are made to ensure data used is accurate and up to date, information may be incomplete, outdated, or incorrect, and may not reflect last-minute changes, cancellations, closures, or unscheduled use. This is an unofficial, independently created tool and is not an official UFV service.</p><p class="header-note-link">UFV Room Bookings page: <a href="https://www.ufv.ca/registrar/schedule-rooms/room-bookings/" target="_blank" rel="noopener noreferrer">https://www.ufv.ca/registrar/schedule-rooms/room-bookings/</a></p></div>
+<nav id="mobileNavBar" class="mobile-nav-bar" aria-label="Mobile room finder controls" hidden>
+  <button id="mobileBackBtn" class="mobile-nav-button" type="button">Back</button>
+  <button id="mobileViewToggleBtn" class="mobile-nav-button" type="button">Map View</button>
+  <button id="mobileOptionsBtn" class="mobile-nav-button" type="button">Options</button>
+  <button id="mobileFullscreenBtn" class="mobile-nav-button" type="button">Full Screen</button>
+</nav>
+
+
+</main>
+<div id="mapFullscreen" class="map-fullscreen" role="dialog" aria-modal="true" aria-label="Full screen floor plan" hidden>
+  <div class="map-fullscreen-toolbar">
+    <div id="fullscreenMapTitle" class="map-fullscreen-title">Floor plan</div>
+    <div class="map-fullscreen-controls">
+      <label class="map-overlay-toggle"><input id="fullscreenShowMapOverlaysInput" type="checkbox" checked> <span>Show map overlays</span></label>
+      <span id="fullscreenMapZoomControls" class="map-fullscreen-zoom-controls"><button id="fullscreenMapZoomInBtn" class="map-zoom-step" type="button" aria-label="Zoom in" title="Zoom in">+</button><button id="fullscreenMapZoomOutBtn" class="map-zoom-step" type="button" aria-label="Zoom out" title="Zoom out" disabled>−</button></span>
+      <button id="fullscreenCloseBtn" class="map-action-button" type="button">Close</button>
+    </div>
+  </div>
+  <div id="mapFullscreenCanvas" class="map-fullscreen-canvas"></div>
+</div>
+
+<script>
+const DATA={"rooms":{"AB":{"success":true,"exception":null,"validations":[],"exceptionType":0,"response":{"headers":["Campus","Building","Room","Room Type","Capacity","Description","Room Note","Image"],"data":[{"rowId":"0486ae0b-d897-4f61-a8c7-7d3c51e8b62d","listData":["AB","ABG","H102","HALL","50","Library Hallway Rotunda - East end","Library Hallway Rotunda - East end","Yes"]},{"rowId":"06417cf0-6181-4918-a7e5-cdfb14b06d7f","listData":["AB","ABD","137","SPPR","36","Indigenous focused classroom","Requires approval from the College of Arts.","Yes"]},{"rowId":"0752ce96-d6ec-483b-b02a-9d54b6c1d29c","listData":["AB","ABA","413","LAB-G","30","GEOG Lab/Classroom","Smartboard","Yes"]},{"rowId":"0a296042-11b3-481b-9486-00d48e5c606f","listData":["AB","ABC","1043","LAB-V","25","Painting \u0026 Drawing Studio","","No"]},{"rowId":"0f75761e-fe8f-49ae-89cc-6a5f4890e135","listData":["AB","ABK","153","ECLASS","40","Classroom","","Yes"]},{"rowId":"12e3e7b6-7beb-4eea-9066-ab4c6f6498bf","listData":["AB","ABB","161","ECLASS","40","Classroom","Lecture Capture","Yes"]},{"rowId":"144f50de-d7d8-4028-b154-8f6371b938a6","listData":["AB","ABD","139","ECLASS","36","Classroom","","Yes"]},{"rowId":"16325a60-74af-428d-b84a-c22ade8b61f4","listData":["AB","ABS","INTG","SPPR","50","Indigenous Teaching Garden","SW of parking Lot 10, behind BLDG S (Outdoors).\n\nNote: Limited seating. Not easily wheelchair accessible.","Yes"]},{"rowId":"1674465f-3d74-4dd3-8284-840d7809af38","listData":["AB","ABD","204","LAB-C","36","Computer Lab","1 x 8' rolling Whiteboard","Yes"]},{"rowId":"16b02a6e-6e8d-4ad3-8b86-e7939e4df350","listData":["AB","ABD","119","ECLASS-ALC","40","Active Learning Classroom","Active Learning Classroom (ECLASS-ALC)","Yes"]},{"rowId":"1a627362-ed66-4469-90db-34580afdb005","listData":["AB","ABC","1419","LAB-GD","0","GDD - Student Support \u0026 EQ Depot","","No"]},{"rowId":"1b00fe43-f679-4746-978b-ae0c2b998516","listData":["AB","ABY","YURT","SPPR","26","YURT","Note: Approval from Child, Youth and Family Studies is required prior to finalization of booking.","Yes"]},{"rowId":"1e70ef90-b4f7-4fd5-aab7-52b933b9fb20","listData":["AB","ABD","104","ECLASS","40","Classroom - Touch Screen","Blue cushion floor","Yes"]},{"rowId":"1fc0d4e9-c85a-4f9a-a9d8-0d86884475f1","listData":["AB","ABK","149","ECLASS","48","Classroom","","Yes"]},{"rowId":"20c5c1ab-0fd5-402f-9d2e-2f266f7c3ed6","listData":["AB","ABD","248","LAB-C","26","Computer Lab","","Yes"]},{"rowId":"21ad41d2-72de-4f85-8fa1-678f9215863d","listData":["AB","ABA","315","ECLASS","36","Classroom","","Yes"]},{"rowId":"2258a9e1-6009-4c44-a919-883e28392c9d","listData":["AB","ABA","266","ECLASS","48","Classroom","","Yes"]},{"rowId":"24d2bb14-a126-4f2e-8784-865ceb5ae8fe","listData":["AB","ABA","259","ECLASS","48","Classroom","","Yes"]},{"rowId":"2683b8d4-dcd8-4c83-8ffd-f3a142b7e668","listData":["AB","ABD","124","ECLASS-ALC","36","Active Learning Classroom","Active Learning Classroom (ECLASS-ALC)","Yes"]},{"rowId":"26c7a5a9-82e7-4d87-8e0a-06cbf39ccba1","listData":["AB","ABC","1127","LAB-V","25","Print Media Studio","","No"]},{"rowId":"28600f75-3d6f-4177-b1a0-31ab73409d6b","listData":["AB","ABK","162","ECLASS","48","Classroom","","Yes"]},{"rowId":"29c94afc-8dbc-4934-b39f-4f45b36ae201","listData":["AB","ABD","215","ECLASS","36","Classroom","","Yes"]},{"rowId":"3143884b-b177-431a-b7ab-d29bff9e22ea","listData":["AB","ABD","133","SPPR","20","Indigenous focused gathering space","Available for Indigenous focused meetings, courses or groups linked to Indigenous community. \nRequires approval of the Indigenous Student Centre prior to booking.","Yes"]},{"rowId":"34deee81-540f-49e1-8d95-4ca41523d64a","listData":["AB","ABA","421","ECLASS","48","Classroom","","Yes"]},{"rowId":"350722d2-8ef0-4a69-8b41-fdeffb3555a0","listData":["AB","ABB","140","ECLASS","74","Classroom","","Yes"]},{"rowId":"3699675d-6a56-47bb-aaa8-5b31d5f2a8b1","listData":["AB","ABC","1133","LAB-V","25","Studio Space","","No"]},{"rowId":"37e96047-605a-4030-869a-d283e9121314","listData":["AB","ABD","213","ECLASS","48","Classroom","Lecture Capture\n1 x 8' rolling white board","Yes"]},{"rowId":"39d2bfe0-d5ff-4fbb-ae15-6ce108511e1c","listData":["AB","ABA","227","MEET","14","Meeting Room","Employee swipe card access required","Yes"]},{"rowId":"3c2d29c7-1129-453c-9551-88c55a63e88b","listData":["AB","ABA","353","LAB-P","24","Physics Lab - Optics Research","9 computer stations available","No"]},{"rowId":"3cd06b7e-bc02-4497-86cc-b42d39a83267","listData":["AB","ABC","1015","ECLASS","36","Classroom","","Yes"]},{"rowId":"41d71fcf-cec7-4c6a-a5b8-30e6ea4340db","listData":["AB","ABD","219","ECLASS","46","Classroom","","Yes"]},{"rowId":"434a4722-3648-4f81-9d08-c2e19c4499fc","listData":["AB","ABD","228","LAB-C","26","Computer Lab","","Yes"]},{"rowId":"443a42de-f8fb-40d3-bcd8-be4681bf1d39","listData":["AB","ABB","101","THEA","155","Theatre","Computer\n3 x Data Projectors\nRear wall theatre Projector\nLaptop Inputs\nGraphical Interface Control System\nFull sound system for media and built in microphone on the podium\nProjection Screen: 2 motorized screen\n\nNote: Hand-held microphones will not be available in B101 unless requested. Please request event support at time of booking.","Yes"]},{"rowId":"45d0c240-890f-4668-9b41-712b376b0bc5","listData":["AB","ABB","150Q","MEET","14","Microsoft Teams Room (MTR)","Accessible through Campus Planning \u0026 Facilities Management (CPFM) - B150","Yes"]},{"rowId":"45d77bce-4285-467d-be43-ee24b18005ab","listData":["AB","ABK","155","ECLASS","36","Classroom","","Yes"]},{"rowId":"4aaa2504-f44e-44af-ba42-b2fa76b251ab","listData":["AB","ABA","232","ECLASS","30","Classroom","Grid-lined white boards (2)","Yes"]},{"rowId":"4b804395-d007-4247-b67e-bf1a103b41de","listData":["AB","ABA","331","LAB-B","24","Biology Lab - Liteclass","","No"]},{"rowId":"4e2e11ab-ade8-4cc5-b15e-bce8cbe1b176","listData":["AB","ABA","328","LAB-B","24","Biology Lab - Liteclass","","No"]},{"rowId":"4eeeee42-f7ac-44c3-8753-9cb7db06b67c","listData":["AB","ABA","252","ECLASS","36","Classroom","","Yes"]},{"rowId":"4ff8333e-50d0-4a4a-994e-b701cb9a5128","listData":["AB","ABB","211S","MEET","10","Meeting Room","Accessible through International Education","Yes"]},{"rowId":"511aed15-a6b0-4e29-9c80-1a285ab143aa","listData":["AB","ABC","1429","EMEET","20","Meeting Room","PC within 86\" TV, wireless keyboard \u0026 mouse.","Yes"]},{"rowId":"56b984b4-f818-4b41-b8fd-ff1d0932e832","listData":["AB","ABD","121","ECLASS","40","Classroom","Lecture Capture","Yes"]},{"rowId":"573a1083-85d3-445f-8d50-cec76379c7d5","listData":["AB","ABC","2433","MEET","8","Meeting room","Laptop required","Yes"]},{"rowId":"5e3c7829-0910-47f4-9bdb-58b6841ef6dd","listData":["AB","ABA","312","ECLASS","48","Classroom","Lecture Capture","Yes"]},{"rowId":"623e3f0a-e5fc-4f0c-bfae-3b119e9eb7b9","listData":["AB","ABD","115","LAB-TH","18","Theatre Media Lab","","No"]},{"rowId":"667a1c05-1e44-4b15-9e57-905ca2d729a0","listData":["AB","ABB","132","ECLASS","74","Classroom","","Yes"]},{"rowId":"67e5ee4c-2d6a-4f2e-99bf-ce0edb30f37b","listData":["AB","ABA","300","ECLASS","28","Classroom","","Yes"]},{"rowId":"685c956c-b0d1-443f-b023-57e2a7a6d9d4","listData":["AB","ABA","245","LAB-C ESL","25","ESL Computer Lab","","Yes"]},{"rowId":"68900229-05aa-4f99-b65c-3e18f339c4a2","listData":["AB","ABA","261","ECLASS","40","Classroom","Lecture Capture","Yes"]},{"rowId":"6a2fe866-b719-46ac-a450-a43ba2db5310","listData":["AB","ABA","233","ECLASS","32","Classroom","","Yes"]},{"rowId":"6eaa3515-9c85-4c77-b9cb-af96b77e3a05","listData":["AB","ABA","362","ECLASS","40","Classroom","","Yes"]},{"rowId":"6ef7b117-db7b-49d6-925b-95f70b7b8d50","listData":["AB","ABD","242","LAB-C","36","Computer Lab","","Yes"]},{"rowId":"6f205d85-d348-45b1-8a3f-ec56f787d591","listData":["AB","ABA","360","ECLASS","32","Classroom","","Yes"]},{"rowId":"7015cd3f-8284-411c-97f4-6cee0b2238ce","listData":["AB","ABA","416","ECLASS","40","Classroom","Lecture Capture","Yes"]},{"rowId":"70c9c47e-7fb1-4ba0-b7f1-927d452e599f","listData":["AB","ABD","226","LAB-C","36","Computer Lab","Laptop 1 - HDMI connectivity\nLaptop 2 - USB-C","Yes"]},{"rowId":"71e0046e-8b80-4e58-a78e-17249a28fae1","listData":["AB","ABD","138","ECLASS","40","","","Yes"]},{"rowId":"750ae69d-7cca-422d-a188-38dd09c6cc56","listData":["AB","ABA","301","ECLASS-HYX","40","Hyflex Classroom","Supports Hyflex instruction (HYX).","Yes"]},{"rowId":"75b934d8-10b2-4ec8-841c-cc1fcb11c0b3","listData":["AB","ABA","235","ECLASS-SEMINAR","32","Classroom","","Yes"]},{"rowId":"78d70366-7b51-4ba8-bf40-5c025963c57a","listData":["AB","ABA","302","LAB-C","36","Computer Lab","","Yes"]},{"rowId":"792a0cc2-b595-4df6-867a-9fad2c15e4f9","listData":["AB","ABB","201","HALL","50","Alumni Hall","Alumni Hall (outside of OReg)","No"]},{"rowId":"7a864cf6-e309-4e65-ae2c-0ce096d67c2d","listData":["AB","ABC","1120","LAB-V","25","New Media Studio (MAC Lab)","Contact the VA department","No"]},{"rowId":"7cdc8848-0b1b-41d9-af80-8a599753a75c","listData":["AB","ABC","1402D","MEET","8","Meeting Room","Laptop required","Yes"]},{"rowId":"7d6661c6-7ead-4a21-accf-526dd46c9e1f","listData":["AB","ABA","354","ECLASS","40","Classroom","Lecture Capture","Yes"]},{"rowId":"8163f926-fd8e-4440-b515-636684ee66ad","listData":["AB","ABA","385","LAB-CH","24","Chemistry Lab/Classroom - Touch Screen","","No"]},{"rowId":"95e571a1-9147-48d7-ab14-34a147084c3e","listData":["AB","ABB","133","MEET","18","Meeting Room","Laptop required","Yes"]},{"rowId":"961a6112-18b4-44e0-85b4-7c12d5c46c23","listData":["AB","ABC","1427","LAB-C","36","Computer Lab","Note: SOCA Priority","Yes"]},{"rowId":"99453844-74f9-43d9-9e65-030284cab133","listData":["AB","ABK","160","ECLASS","36","POD Classroom","","Yes"]},{"rowId":"9a4cbeeb-dedd-4b72-a754-5e5e1f5552db","listData":["AB","ABC","1426","LAB-GD","28","GDD - MAC Lab","","Yes"]},{"rowId":"9bb1e2d0-c50c-428b-a8c0-4da9306461ab","listData":["AB","ABD","122","ECLASS","36","Classroom","Lecture Capture","Yes"]},{"rowId":"9ce1c54d-5a8d-4a5e-9b31-d7c05b58dedc","listData":["AB","ABC","1050","LAB-V","25","Sculpture Studio","","No"]},{"rowId":"9e280857-94f9-4947-8055-2d2436630cbd","listData":["AB","ABD","105","LAB-TH","36","Theatre Performance Lab","Sprung flooring","No"]},{"rowId":"9ee5cbe8-a82e-45e7-b3ae-fb8bbe86741e","listData":["AB","ABA","253","ECLASS","36","Classroom/UUNP Lab","Note: Not to be used for ADHC bookings.","Yes"]},{"rowId":"9f5b5053-ea5c-4afe-9e55-fe9608dedee2","listData":["AB","ABD","123","ECLASS-HYX","40","Hyflex Classroom","Supports Hyflex instruction (HYX).","Yes"]},{"rowId":"a115258d-8505-4f98-b9e3-726849800081","listData":["AB","ABK","151","ECLASS","40","Classroom","","Yes"]},{"rowId":"a2cbff5b-1b52-40da-92a5-b00965a1220e","listData":["AB","ABA","388","LAB-CH","24","Chemistry Lab - Liteclass","","No"]},{"rowId":"a486c72b-f947-47b7-8222-c30e5de85f6f","listData":["AB","ABA","254","ECLASS","36","Classroom","","Yes"]},{"rowId":"a5e90cb4-5da7-48aa-874c-c69faf9a8c1d","listData":["AB","ABK","150","SPPR","40","South Patio","South patio - Seating for 40 people at tables and chairs.\n\nBuilt-in wooden bench can hold 16 additional people.","Yes"]},{"rowId":"a7d23798-6d63-490b-a1f7-0dccdbb45984","listData":["AB","ABA","359","LAB-P","36","Physics Lab - 1st \u0026 2nd year","","No"]},{"rowId":"a9186c53-abda-4678-96e6-6b45818d9cae","listData":["AB","ABC","1044","LAB-V","25","Foundation Studio","","No"]},{"rowId":"a944751b-bf9b-4d96-bcd5-7d64772fd82e","listData":["AB","ABA","225","MEET","40","Boardroom","Restricted access - A225 is not available to all user groups, and an alternative room may be assigned. \n\nHardwired keyboard and mouse. No whiteboards\n\nVideo Conferencing instructions: \nhttps://ufv.ca/its.audio-visual-services/classrooms-and-meeting-rooms/","Yes"]},{"rowId":"a9d4243b-f317-4798-a60a-0bf1065f9814","listData":["AB","ABD","221","LAB-C CIS","36","CIS Computer Lab","School of Computing bookings only","Yes"]},{"rowId":"aab39649-d874-4dbe-87da-97c87637ab4f","listData":["AB","ABA","351","LAB-P","36","Physics Lab","","Yes"]},{"rowId":"af51b94f-01c4-4ae7-94b7-eee2c50615c0","listData":["AB","ABC","1113","LAB-V","25","Photography Main Studio","","No"]},{"rowId":"b4551a5c-4dab-48ea-bf07-e055a0bb0b80","listData":["AB","ABA","264","ECLASS","36","Classroom","","Yes"]},{"rowId":"b731a58d-d86a-41f7-b262-7492b549d8b9","listData":["AB","ABB","103","HALL","50","Harvest Hallway-Theatre area","Harvest Tables (outside B101). Previously H100A.\n\nNote: Outside catering and food services are not permitted in this space due to its proximity to the Dining Hall. For inquiries regarding food services, please contact Brianna.Darby@ufv.ca.","Yes"]},{"rowId":"bcceaf12-b4d1-4586-be1f-aa348b76be6f","listData":["AB","ABD","225","ECLASS-HYX","40","Hyflex Classroom","Supports Hyflex instruction (HYX).\n\nInteractive furniture.","Yes"]},{"rowId":"bdee0580-815f-464b-8dff-dfd673584799","listData":["AB","ABB","158","LAB-M","24","Modern Languages Resource Room","Permission Required - Contact mola@ufv.ca","Yes"]},{"rowId":"c4b2dfc6-8fd4-4902-8bc9-273ee854929b","listData":["AB","ABA","203B","EMEET","20","Meeting Room","Built-in computer","Yes"]},{"rowId":"c6dbba2b-cd47-4106-966c-1842236cc924","listData":["AB","ABA","210","ECLASS","48","Classroom","","Yes"]},{"rowId":"c9812214-e9ae-4ccf-a8bb-d7944c4e64a7","listData":["AB","ABD","223","LAB-C","36","Computer Lab","","Yes"]},{"rowId":"caa27fb2-1449-460e-81dc-69a9dd7373bf","listData":["AB","ABD","134","ECLASS","40","Classroom","","Yes"]},{"rowId":"cdcb3106-7dd5-4f75-a9ea-47a3e1a7014e","listData":["AB","ABA","212","ECLASS","48","Classroom","","Yes"]},{"rowId":"ce727a0c-05fa-492c-864b-a4918eeeb933","listData":["AB","ABA","269","ECLASS","48","Classroom","","Yes"]},{"rowId":"d1a2101f-0eac-4578-a4e6-34f96577b9cb","listData":["AB","ABA","337","LAB-B","24","Biology Lab - Liteclass","","Yes"]},{"rowId":"d7c4a8b7-436a-46be-b265-82c3d76bbed0","listData":["AB","ABD","238","LAB-M","16","MOLA Seminar","Soft seating (8) with tables","Yes"]},{"rowId":"d92a00a8-3843-4a51-b41b-5a8f6af405b8","listData":["AB","ABC","1424","LAB-GD","30","GDD - Transmedia studio/classroom","","Yes"]},{"rowId":"d92e76ef-a71f-45fe-b4ce-6f90c787dd5b","listData":["AB","ABD","136","ECLASS","48","Classroom","","Yes"]},{"rowId":"d9a3d56e-caa6-475c-b005-bfb96e59faa9","listData":["AB","ABS","3123B","MEET","8","Meeting room","Laptop required\nExt. 4219\nNo whiteboards","Yes"]},{"rowId":"d9fdb833-1b46-4a26-8e58-0ec82e11760c","listData":["AB","ABD","122B","ECLASS-SEMINAR","18","Classroom","","Yes"]},{"rowId":"dbecc416-1308-490e-92f1-436b864c8e8f","listData":["AB","ABA","352","ECLASS","36","Classroom","","Yes"]},{"rowId":"ddeb5be0-e720-4e01-b961-10c6c8eb280d","listData":["AB","ABA","219","SPPR","34","Spirit Bear Lounge Area","Note: Outside catering and food services are not permitted in this space due to its proximity to Spirit Bear Café. For inquiries regarding food services, please contact Brianna.Darby@ufv.ca.","Yes"]},{"rowId":"de115893-4030-40ff-a83d-af003476cfeb","listData":["AB","ABC","1417","LAB-GD","0","GDD - Photo Booth","","No"]},{"rowId":"e0b13212-32e0-4370-863d-3faa47c9968e","listData":["AB","ABC","1422","LAB-GD","30","GDD - Transmedia studio/classroom","","Yes"]},{"rowId":"e194a8b1-3527-49de-8f39-af57d0fd71f5","listData":["AB","ABD","113","LAB-TH","24","Theatre Wardrobe","","No"]},{"rowId":"e5cbcbad-47a4-41a1-a002-4ca80c179fa9","listData":["AB","ABA","234","ECLASS","40","Classroom","","Yes"]},{"rowId":"e6e05b58-c217-4e15-b6cf-900ce3b95c2e","listData":["AB","ABC","1031","LAB-V","25","Foundation Studio","","No"]},{"rowId":"e6f38ea6-9cfc-4815-b542-994a610e33d8","listData":["AB","ABK","158","ECLASS","48","Classroom","","Yes"]},{"rowId":"ebd7f6c8-992e-4269-88a6-f0280cb01693","listData":["AB","ABA","305","ECLASS","40","Classroom","Lecture Capture","Yes"]},{"rowId":"f00bdc38-e28e-4e58-b652-d9e03fbf035f","listData":["AB","ABC","1420","LAB-GD","30","POD - Graphic Design","","No"]},{"rowId":"f46b4a2c-8b4b-4ed3-b732-94f41162f65e","listData":["AB","ABK","167","ECLASS","48","Classroom","","Yes"]},{"rowId":"f5d1df0e-a41a-47d3-815d-5b2878a3790f","listData":["AB","ABC","1042","LAB-V","25","Senior Studio","","No"]},{"rowId":"f6cea557-5a2e-49bd-9b5c-ece80aa67b72","listData":["AB","ABA","310","ECLASS","36","Classroom","","Yes"]},{"rowId":"f73983d2-b7f5-43e2-ac61-838f8c9e1eb7","listData":["AB","ABD","217","ECLASS","54","Classroom","Lecture Capture","Yes"]},{"rowId":"fb19f149-560e-4937-90b5-194516792a01","listData":["AB","ABA","402","ECLASS","32","Classroom - Touch Screen","","Yes"]},{"rowId":"fc3ac34b-f343-4bfd-a2c2-7425b50a0fce","listData":["AB","ABA","334","SPPR","24","Biology Resource Room","","No"]},{"rowId":"ff3ce1d6-a099-4dd1-8815-f5411f335f93","listData":["AB","ABC","1425","ECLASS-ALC","36","Active Learning Classroom","Active Learning Classroom (ECLASS-ALC)\nLecture Capture","Yes"]},{"rowId":"ffa5641f-b316-4534-88c6-62cb84425cf5","listData":["AB","ABA","393","LAB-CH","24","Chemistry Lab/Classroom","","No"]}]}},"CEP":{"success":true,"exception":null,"validations":[],"exceptionType":0,"response":{"headers":["Campus","Building","Room","Room Type","Capacity","Description","Room Note","Image"],"data":[{"rowId":"0ddbc5a4-fbef-44d2-b504-831c2b098bc4","listData":["CEP","CEPT","1053","ECLASS","36","Trades Classroom","","Yes"]},{"rowId":"1012df5c-dd89-4b94-86bb-675a7db1faae","listData":["CEP","CEPV","111","ECLASS-CE","36","Classroom - Industry Services","Permission required by Industry Services\nLecture Capture\nMicrophone: Lavalier (clip-on)\nWireless Presentation (Eduroam required). Note: No audio in Android.","Yes"]},{"rowId":"219c8088-d057-48c5-8699-93eec0053eb6","listData":["CEP","CEPA","2304","LAB-N","2","Simulation/Patient Room","","No"]},{"rowId":"29f0adfc-9487-48a7-9b54-4b8a023bfd47","listData":["CEP","CEPA","1354","ECLASS","36","Classroom","Lecture Capture\nWireless Presentation (Eduroam required) Note: Audio unavailable for Android.\nExt. 2371","Yes"]},{"rowId":"2ac71561-8172-4802-aa95-32ac63e207b8","listData":["CEP","CEPT","1212","CLASS","18","Trades Classroom","","No"]},{"rowId":"2cde6727-0d17-40c9-a646-7bc6ae7c29c4","listData":["CEP","CEPA","2314","LAB-N","2","Simulation/Patient Room","","No"]},{"rowId":"32beb847-74fb-4981-9cf8-8c116bedae5e","listData":["CEP","CEPA","1360","ECLASS","36","Classroom","Lecture Capture\nWireless Presentation (Eduroam required) Note: Audio unavailable for Android.\nExt. 2373","Yes"]},{"rowId":"3866ccb6-a4d0-4303-9002-6d2243ab6e92","listData":["CEP","CEPS","206","ECLASS","25","Building Trades Classroom","","Yes"]},{"rowId":"3ad408f4-3c70-4719-84d4-7218373e93b8","listData":["CEP","CEPA","1415","ECLASS-UUNP","30","Classroom-Dedicated UUNP","1 x 7' Projector Board\nDedicated space - not bookable","Yes"]},{"rowId":"3cb4e7a0-3e82-419f-8d64-35b374b06db5","listData":["CEP","CEPT","2030","ECLASS","36","Trades Classroom (Electronics)","","Yes"]},{"rowId":"40a7bfd1-c203-4e0a-b7e9-f8978ecc7b5b","listData":["CEP","CEPT","1280","ECLASS","25","Trades Classroom","","Yes"]},{"rowId":"40c4912c-abee-4108-bb6b-7fa31245dd0f","listData":["CEP","CEPT","1011","CLASS","50","Trades Shop (Electrical)","","No"]},{"rowId":"444e94fc-f4b5-4476-ab58-d42f2803cf61","listData":["CEP","CEPA","2321","LAB-N","16","Nursing Lab","4 sinks\nExt 2359","No"]},{"rowId":"44f79d95-9763-4a73-a964-2cdd1b4c3177","listData":["CEP","CEPA","2416","MEET","16","Meeting Room","No phone or whiteboards.","Yes"]},{"rowId":"45db807c-6dcb-4a19-b1c6-77b74953ac0c","listData":["CEP","CEPV","116","LAB-C CE","24","CE - Computer Lab","Permission Required by CE\nLecture Capture\nMicrophone: Lavalier (clip-on)\nWireless Presentation (Eduroam required) Note: No audio for Android.","Yes"]},{"rowId":"4b5d35e0-be62-4b7c-83c3-fa32939b66f2","listData":["CEP","CEPT","H1000","HALL","5","Hallway","T-Building Main Entrance Hallway","No"]},{"rowId":"4d96a3aa-d069-4824-9ae0-f2bbe5881563","listData":["CEP","CEPT","1033","LAB-T","50","Trades Lab - Laptop Required","","No"]},{"rowId":"52711521-c769-4eaa-9d61-a76e37853c81","listData":["CEP","CEPT","2031","LAB-T","50","Electronics Lab","","No"]},{"rowId":"54866d18-b6e3-4094-af97-0196c868a3c5","listData":["CEP","CEPT","1281","ECLASS","36","Trades Classroom","","No"]},{"rowId":"5e716675-6d6c-479f-93d6-f74d047e8b41","listData":["CEP","CEPA","1364","LAB-K","36","KIN Lab","Wireless Presentation (Eduroam required). \nNote: Audio unavailable for Android.\nExt. 2375","Yes"]},{"rowId":"6cd3e09d-5500-44d1-81fa-36936300de61","listData":["CEP","CEPV","108","ECLASS-CE","32","CE Classroom","Permission Required by CE\nLecture Capture\nMicrophone: Lavalier (clip-on)\nWireless Presentation (Eduroam required). Note: Audio unavailable for Android.","Yes"]},{"rowId":"6da27e45-826c-419c-8fa1-1f428c7b15b0","listData":["CEP","CEPA","2111","LAB-B","24","Biology Lab","Priority Booking High level Wet Lab\nExt 2351","No"]},{"rowId":"6ec428dc-a601-482c-a3ae-a09637d4882c","listData":["CEP","CEPA","0018","ECLASS","30","Classroom","Lecture Capture\nWireless Presentation (Eduroam required). Note: Audio unavailable for Android.\nExt. 2368","Yes"]},{"rowId":"6f959499-e6d8-4bc0-ad61-bda8c5166514","listData":["CEP","CEPA","H1100","HALL","432","West Atrium - Main Entrance Hallway","West Atrium - Main Entrance Hallway","Yes"]},{"rowId":"70ea36e8-95c3-4af9-8178-368bb25ef6ab","listData":["CEP","CEPA","1362","ECLASS","36","Classroom","Lecture Capture\nWireless Presentation (Eduroam required) Note: Audio unavailable for Android.\nExt. 2374","Yes"]},{"rowId":"710a19b1-1619-4457-b6ba-d3c30b0ea3b4","listData":["CEP","CEPA","1105","ECLASS","36","Classroom","Lecture Capture\nWireless Presentation (Eduroam required) Note: Audio unavailable for Android.","Yes"]},{"rowId":"7639d9ae-3ae1-48c8-9744-7a4c3977da63","listData":["CEP","CEPV","115","ECLASS","32","Classroom","Lecture Capture\nMicrophone: Lavalier (clip-on)\nWireless Presentation (Eduroam required). Note: No audio in Android.","Yes"]},{"rowId":"79236e10-427c-4638-aeed-a57f514653d7","listData":["CEP","CEPA","2428","MEET","24","Meeting Room","Laptop required\nNo whiteboards\nExt 2620","Yes"]},{"rowId":"7bbd70ea-e06a-4113-a61b-e14a213926db","listData":["CEP","CEPT","1124","ECLASS","25","Trades Classroom","","No"]},{"rowId":"80453d92-971e-4dd7-99f8-fd8bdbf23d21","listData":["CEP","CEPA","H2100","HALL","50","West Atrium 2nd floor - outside A2106 Hallway","West Atrium - 2nd floor (outside of CEPA 2106)","Yes"]},{"rowId":"80df20d7-0d17-44ee-9f97-9c4fa6909e7d","listData":["CEP","CEPS","211","LAB-T","60","Trades Lab","","Yes"]},{"rowId":"8450b1a6-3ee5-4571-a116-139c506d1cb3","listData":["CEP","CEPT","1201","ECLASS","24","Trades Classroom (Plumbing)","","Yes"]},{"rowId":"912e18d3-0309-427b-beff-1c07913eacd3","listData":["CEP","CEPA","0020","ECLASS","28","Classroom","Lecture Capture\nWireless Presentation (Eduroam required). Note: Audio unavailable for Android.\nExt. 2364","Yes"]},{"rowId":"9358d53b-39a8-4949-bc4f-e740b57b17fe","listData":["CEP","CEPV","112","SPPR","36","Athletics","Note: Temporarily assigned to Athletics\n\nLaptop Required\n16 all in one chair/table combo\nLecture Capture\nMicrophone: Lavalier (clip-on)\nWireless Presentation (Eduroam required). Note: Audio unavailable for Android.","No"]},{"rowId":"93dc65be-e48e-47e9-8216-da05a782678f","listData":["CEP","CEPA","2317","LAB-N","16","Nursing Lab","4 sinks\nExt 2358","No"]},{"rowId":"9a62cdec-9d82-40bd-ad4f-a9f21aa0e1fa","listData":["CEP","CEPA","1424","ECLASS","36","Classroom","Lecture Capture\nWireless Presentation (Eduroam required). Note: no audio in Android.\nExt. 2448","Yes"]},{"rowId":"a626e52b-d336-4d35-b810-a78a3631b998","listData":["CEP","CEPA","1454","CLASS-SEMINAR","24","Dedicated - Aboriginal Access","Classroom off of the Gathering Hall - Requires permission to book\nExt. 2352\nLecture Capture\nWireless Presentation (Eduroam required) Note: Audio unavailable for Android.","Yes"]},{"rowId":"a6fb8c47-8a86-476b-a4ec-be72bef748ab","listData":["CEP","CEPA","2209","ECLASS","40","Classroom","Ext 2393","Yes"]},{"rowId":"a87baf96-0a43-452b-8e63-cfd5b77cf53c","listData":["CEP","CEPV","107","ECLASS-AGRI","40","Classroom - Agriculture","Lecture Capture\nWireless Presentation (Eduroam required) Note: Audio unavailable for Android.\nMicrophone: Lavalier (clip-on)","Yes"]},{"rowId":"a89c4b49-ceb9-424f-8f0e-e06697d09245","listData":["CEP","CEPA","2213","ECLASS","40","Classroom","Ext 2395","Yes"]},{"rowId":"aa5c555c-43e1-47fc-aa04-4fd6fb955451","listData":["CEP","CEPA","2313","LAB-N","2","Drop in lab","","No"]},{"rowId":"abef08a3-e4bf-4301-a7d9-cd4e631703cc","listData":["CEP","CEPT","1287","ECLASS","36","Trades Classroom","","Yes"]},{"rowId":"ac00b9e3-4c13-4959-9f73-ea1d079ace18","listData":["CEP","CEPA","1457","SPPR","286","Gathering Place","Gathering Place\nAvailable for Indigenous focused meetings, courses or groups linked to Indigenous community. \nRequires approval of the Indigenous Student Centre prior to booking.\nExt 2390","Yes"]},{"rowId":"af2d2bdd-140c-444a-b80b-a6a9a6def488","listData":["CEP","CEPA","1103","LAB-PG","24","Physics/Geography Dry Lab","Lecture Capture\nWireless Presentation (Eduroam required) Note: Audio unavailable for Android.","Yes"]},{"rowId":"b0a4af8d-9dfc-4fb6-9e77-21abaf62a685","listData":["CEP","CEPA","1355","ECLASS","32","Classroom","Lecture Capture\nWireless Presentation (Eduroam required) Note: Audio unavailable for Android.\nExt. 2372","Yes"]},{"rowId":"b24f85e4-f72e-423f-96b6-069629f32609","listData":["CEP","CEPA","2207","ECLASS","42","Classroom","Ext 2392","Yes"]},{"rowId":"bfbd5dfe-c7f5-4885-94b5-68a2d0e7d0ed","listData":["CEP","CEPA","0024","LAB-C","36","Computer Lab","Lecture Capture\nWireless Presentation (Eduroam required) Note: Audio unavailable for Android.\nExt. 2366","Yes"]},{"rowId":"c35b2d95-4c7c-4ca8-a510-f715d71bc16f","listData":["CEP","CEPA","2204","LAB-D","24","Dental Clinic/Operatory","","No"]},{"rowId":"c5344144-a9ba-4d48-b6fa-ecb4970fa0c0","listData":["CEP","CEPT","2015","ECLASS","24","Trades Classroom","","Yes"]},{"rowId":"c88c282b-7c2a-42dc-83ce-bf1b43007400","listData":["CEP","CEPT","1024","MEET","10","Meeting Room","Laptop Required\nAccessible through the Faculty of Applied and Technical Studies (APTS) office - CEPT 1002","Yes"]},{"rowId":"cb52dd11-66d6-4c00-90e3-5d4d5c270c5c","listData":["CEP","CEPA","2105","LAB-G","32","Low Level Wet lab - AGRI, GEOG, UUP","Ext 2356","Yes"]},{"rowId":"cd485079-74b1-40b8-9145-b46f34602402","listData":["CEP","CEPA","2201","ECLASS","60","Classroom","Tiered Classroom \nMini Whiteboards\nExt 2378","Yes"]},{"rowId":"cf7819da-d1e8-49a5-9b26-e0836464fd3a","listData":["CEP","CEPA","0022","ECLASS","36","Classroom","Lecture Capture\nWireless Presentation (Eduroam required). \nNote: Audio unavailable for Android.\nExt 2365","Yes"]},{"rowId":"cfa2e99b-29c6-4676-a418-56c405d69071","listData":["CEP","CEPT","2001","LAB-C","26","Trades Computer Lab","","Yes"]},{"rowId":"d232adc0-af52-4eea-b44a-80e1a0e9796d","listData":["CEP","CEPS","209","ECLASS","40","Building Trades Classroom","","Yes"]},{"rowId":"d3c81800-7281-4ccd-a0ef-2fbcf2cfbd5a","listData":["CEP","CEPA","2315","LAB-N","2","Simulation/Patient Room","","No"]},{"rowId":"d76ca03d-237f-4fc9-b5e1-03eb55df3250","listData":["CEP","CEPA","2203","ECLASS","24","Classroom","Priority Health Sciences - Debriefing\nLecture Capture\nWireless Presentation (Eduroam required). Note: Audio unavailable for Android.\nExt. 2379","Yes"]},{"rowId":"d96a8aa0-9af7-4134-b561-af3ba0d61c99","listData":["CEP","CEPA","H1300","HALL","216","East Atrium hall area","East Atrium Hall\n\nNote: Outside catering and food services are not permitted in this space due to its proximity to Spirit Bear Café. For inquiries regarding food services, please contact Brianna.Darby@ufv.ca.","No"]},{"rowId":"db5b5c14-925d-4215-b8ff-918ecefc34d6","listData":["CEP","CEPA","1110","LAB-CH","28","Priority Booking Chemistry Lab (High level Wet)","","No"]},{"rowId":"dd8cb45f-5902-4029-92c9-b8e0c970a5c7","listData":["CEP","CEPT","1001","ECLASS","36","Classroom (Electrical)","","Yes"]},{"rowId":"e0cbd043-f2ec-4e2a-bfc7-57179b18fc15","listData":["CEP","CEPA","2325","LAB-N","16","Nursing Lab","4 sinks\nExt 2361","No"]},{"rowId":"e18e5a94-1a96-41f0-86e6-798e4655400d","listData":["CEP","CEPA","1314","ECLASS","40","Classroom","Lecture Capture\nWireless Presentation (Eduroam required) Note: Audio unavailable for Android.\nExt. 2369","Yes"]},{"rowId":"e66eee1d-c3ec-4b43-974a-a4aee0444d36","listData":["CEP","CEPT","1122","ECLASS","25","Trades Classroom","","Yes"]},{"rowId":"e82284eb-e6bf-4850-921c-8f545e143f02","listData":["CEP","CEPT","1282","ECLASS","24","Trades Classroom","","No"]},{"rowId":"e8f9a6a3-f9c1-4d11-9adb-6b9d4d967eac","listData":["CEP","CEPA","2215","ECLASS","50","Classroom","Ext 2396","Yes"]},{"rowId":"ea54907f-e32b-4ae8-ad07-82af68c170ff","listData":["CEP","CEPA","3436","MEET","8","Meeting Room","Laptop required\nExt 2267","Yes"]},{"rowId":"f2059528-e494-44d5-91cf-fffcb9009270","listData":["CEP","CEPA","2327","LAB-N","16","Nursing Lab","4 sinks\nExt 2360","No"]},{"rowId":"f5054633-3a3d-4d49-aa59-b7b347a41eaf","listData":["CEP","CEPA","2211","ECLASS","40","Classroom","Ext 2394","Yes"]},{"rowId":"f515b295-f605-4fa5-89b7-0515d886d208","listData":["CEP","CEPA","1316","ECLASS","36","Classroom","4 bulletin display boards\nLecture Capture\nWireless Presentation (Eduroam required) Note: Audio unavailable for Android.\nExt. 2370\nCYFS Priority","Yes"]},{"rowId":"f5645a29-31e2-4ca0-86a9-1affaecf3c6c","listData":["CEP","CEPT","1112","ECLASS","36","Trades Classroom (Auto)","","Yes"]},{"rowId":"fc8d10ce-d793-4549-b83b-7224dd589410","listData":["CEP","CEPS","203","ECLASS","33","Building Trades Classroom","","No"]},{"rowId":"ff113bdd-78d2-4ed9-82c4-91d11c81e38a","listData":["CEP","CEPA","2308","LAB-N","2","Simulation/Patient Room","","No"]}]}}},"overlays":{"version":4,"plans":{"aba2":{"image":"aba2.png","campus":"AB","building":"ABA","buildingLabel":"A","floor":"Main Floor (A2)","rooms":{"ABA-210":{"points":[[2490,1150],[2657,1318],[2820,1152],[2654,984]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"A210"},"ABA-212":{"points":[[2324,1314],[2493,1484],[2655,1321],[2486,1157]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"A212"},"ABA-232":{"points":[[1734,1316],[1738,1552],[1972,1550],[1969,1316]],"roomType":"ECLASS","capacity":"30","description":"Classroom","label":"A232"},"ABA-233":{"points":[[1752,1714],[1750,1954],[1906,1954],[1907,1716]],"roomType":"ECLASS","capacity":"32","description":"Classroom","label":"A233"},"ABA-234":{"points":[[1503,1314],[1503,1552],[1731,1552],[1729,1316]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"A234"},"ABA-235":{"points":[[1579,1714],[1577,1954],[1747,1954],[1747,1713]],"roomType":"ECLASS-SEMINAR","capacity":"32","description":"Classroom","label":"A235"},"ABA-252":{"points":[[2136,377],[2136,618],[2336,618],[2336,380]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A252"},"ABA-253":{"points":[[2098,698],[2336,698],[2335,1015],[2098,1017]],"roomType":"ECLASS","capacity":"36","description":"Classroom/UUNP Lab","label":"A253"},"ABA-254":{"points":[[1942,382],[1940,462],[1949,460],[1945,618],[2133,617],[2131,380]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A254"},"ABA-259":{"points":[[1862,741],[1860,1017],[2093,1017],[2091,739]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"A259"},"ABA-261":{"points":[[1826,741],[1824,817],[1624,818],[1624,1019],[1855,1019],[1855,741]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"A261"},"ABA-264":{"points":[[1626,620],[1824,622],[1821,379],[1624,380]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A264"},"ABA-266":{"points":[[1386,382],[1388,618],[1622,618],[1621,380]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"A266"},"ABA-269":{"points":[[1388,804],[1622,804],[1621,1017],[1386,1017]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"A269"},"ABA-245":{"points":[[1305,1637],[1576,1637],[1572,1954],[1338,1954],[1341,1756],[1303,1756]],"roomType":"LAB-C ESL","capacity":"25","description":"ESL Computer Lab","label":"A245"},"ABA-203B":{"points":[[3043,1177],[3072,1206],[3097,1182],[3227,1312],[3333,1207],[3173,1047]],"roomType":"EMEET","capacity":"20","description":"Meeting Room","label":"A203B"},"ABA-219":{"points":[[2494,1601],[2361,1736],[2296,1736],[2294,1879],[2458,1880],[2503,1927],[2557,1877],[2615,1877],[2615,1814],[2662,1767]],"roomType":"SPPR","capacity":"34","description":"Spirit Bear Lounge Area","label":"A219"},"ABA-225":{"points":[[2292,1668],[2187,1668],[2187,1736],[1911,1738],[1909,1956],[2292,1954]],"roomType":"MEET","capacity":"40","description":"Boardroom","label":"A225"},"ABA-227":{"points":[[2007,1640],[2005,1734],[2184,1731],[2184,1640]],"roomType":"MEET","capacity":"14","description":"Meeting Room","label":"A227"}},"buildings":{}},"aba3":{"image":"aba3.png","campus":"AB","building":"ABA","buildingLabel":"A","floor":"3rd Floor (A3)","rooms":{"ABA-300":{"points":[[2672,874],[2843,1047],[2940,952],[2769,779]],"roomType":"ECLASS","capacity":"28","description":"Classroom","label":"A300"},"ABA-301":{"points":[[2848,1195],[3048,1397],[3222,1226],[3059,1065],[2910,1213],[2868,1174]],"roomType":"ECLASS-HYX","capacity":"40","description":"Hyflex Classroom","label":"A301"},"ABA-302":{"points":[[2491,1055],[2659,1222],[2838,1047],[2668,874]],"roomType":"LAB-C","capacity":"36","description":"Computer Lab","label":"A302"},"ABA-305":{"points":[[3043,1399],[2883,1235],[2717,1394],[2888,1565]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"A305"},"ABA-310":{"points":[[2380,1166],[2549,1338],[2655,1224],[2488,1060]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A310"},"ABA-312":{"points":[[2216,1330],[2385,1498],[2547,1339],[2376,1168]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"A312"},"ABA-315":{"points":[[2549,1559],[2720,1731],[2886,1568],[2765,1449],[2628,1585],[2574,1531]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A315"},"ABA-352":{"points":[[2106,402],[2106,642],[2264,642],[2262,402]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A352"},"ABA-354":{"points":[[1869,400],[1869,642],[2104,640],[2102,402]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"A354"},"ABA-360":{"points":[[1671,402],[1671,642],[1716,644],[1718,593],[1866,588],[1866,402]],"roomType":"ECLASS","capacity":"32","description":"Classroom","label":"A360"},"ABA-362":{"points":[[1460,400],[1460,642],[1666,642],[1666,400]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"A362"},"ABA-328":{"points":[[2093,1570],[2093,1547],[2176,1547],[2178,1334],[1821,1332],[1821,1406],[1841,1408],[1843,1543],[1895,1543],[1897,1572]],"roomType":"LAB-B","capacity":"24","description":"Biology Lab - Liteclass","label":"A328"},"ABA-331":{"points":[[1850,1657],[1850,1971],[1891,1972],[1891,1987],[2113,1989],[2113,1972],[2182,1972],[2180,1686],[2133,1684],[2131,1657],[2005,1657],[2005,1677],[1942,1677],[1940,1657]],"roomType":"LAB-B","capacity":"24","description":"Biology Lab - Liteclass","label":"A331"},"ABA-334":{"points":[[1550,1545],[1594,1547],[1594,1572],[1704,1570],[1704,1332],[1550,1332]],"roomType":"SPPR","capacity":"24","description":"Biology Resource Room","label":"A334"},"ABA-337":{"points":[[1328,1684],[1330,1972],[1473,1972],[1473,1987],[1621,1987],[1621,1974],[1662,1971],[1664,1655],[1597,1653],[1595,1675],[1487,1675],[1487,1655],[1361,1655],[1361,1684]],"roomType":"LAB-B","capacity":"24","description":"Biology Lab - Liteclass","label":"A337"},"ABA-351":{"points":[[2025,1076],[2263,1074],[2263,787],[2250,790],[2250,742],[2263,742],[2263,725],[2025,725]],"roomType":"LAB-P","capacity":"36","description":"Physics Lab","label":"A351"},"ABA-353":{"points":[[1788,763],[1788,1014],[2023,1012],[2023,762]],"roomType":"LAB-P","capacity":"24","description":"Physics Lab - Optics Research","label":"A353"},"ABA-359":{"points":[[1785,1074],[1787,722],[1595,720],[1595,742],[1552,742],[1550,1074]],"roomType":"LAB-P","capacity":"36","description":"Physics Lab - 1st \u0026 2nd year","label":"A359"},"ABA-385":{"points":[[713,485],[713,882],[987,882],[987,816],[975,816],[973,484]],"roomType":"LAB-CH","capacity":"24","description":"Chemistry Lab/Classroom - Touch Screen","label":"A385"},"ABA-388":{"points":[[334,381],[381,381],[381,406],[731,406],[731,164],[334,164]],"roomType":"LAB-CH","capacity":"24","description":"Chemistry Lab - Liteclass","label":"A388"},"ABA-393":{"points":[[280,899],[439,901],[439,882],[556,884],[556,834],[581,832],[581,514],[550,513],[549,590],[325,590],[325,570],[273,570],[273,513],[238,513],[236,882],[280,882]],"roomType":"LAB-CH","capacity":"24","description":"Chemistry Lab/Classroom","label":"A393"}},"buildings":{}},"aba4":{"image":"aba4.png","campus":"AB","building":"ABA","buildingLabel":"A","floor":"4th Floor (A4)","rooms":{"ABA-402":{"points":[[2288,604],[2466,779],[2488,759],[2479,748],[2571,662],[2401,492]],"roomType":"ECLASS","capacity":"32","description":"Classroom - Touch Screen","label":"A402"},"ABA-416":{"points":[[2160,1091],[2149,1078],[2176,1055],[2010,883],[1848,1046],[2026,1224]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"A416"},"ABA-421":{"points":[[2026,1660],[2073,1610],[2136,1612],[2138,1547],[2181,1505],[2006,1334],[1855,1485]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"A421"},"ABA-413":{"points":[[2211,1141],[2202,1132],[2065,1272],[2240,1447],[2406,1280],[2238,1112]],"roomType":"LAB-G","capacity":"30","description":"GEOG Lab/Classroom","label":"A413"}},"buildings":{}},"abb1":{"image":"abb1.png","campus":"AB","building":"ABB","buildingLabel":"B","floor":"Main Floor (B1)","rooms":{"ABB-132":{"points":[[1019,434],[1019,793],[1251,793],[1253,436]],"roomType":"ECLASS","capacity":"74","description":"Classroom","label":"B132"},"ABB-140":{"points":[[626,434],[626,791],[860,793],[858,436]],"roomType":"ECLASS","capacity":"74","description":"Classroom","label":"B140"},"ABB-161":{"points":[[1019,1421],[1251,1422],[1251,1199],[1020,1201]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"B161"},"ABB-101":{"points":[[2537,1281],[2536,1424],[2584,1424],[2655,1494],[2691,1460],[2763,1529],[3118,1175],[2906,962],[2586,1280]],"roomType":"THEA","capacity":"155","description":"Theatre","label":"B101"},"ABB-103":{"points":[[2281,1501],[2283,1417],[2274,1417],[2274,1269],[2283,1269],[2283,1112],[2276,1112],[2277,1027],[2516,1027],[2554,1058],[2534,1132],[2552,1148],[2505,1200],[2546,1242],[2512,1261],[2510,1281],[2534,1280],[2532,1334],[2508,1335],[2508,1370],[2534,1370],[2532,1418],[2510,1418],[2508,1500]],"roomType":"HALL","capacity":"50","description":"Harvest Hallway-Theatre area","label":"B103"},"ABB-133":{"points":[[1148,872],[940,872],[940,1029],[1146,1027]],"roomType":"MEET","capacity":"18","description":"Meeting Room","label":"B133"},"ABB-150Q":{"points":[[765,850],[762,1027],[859,1029],[859,850]],"roomType":"MEET","capacity":"14","description":"Microsoft Teams Room (MTR)","label":"B150Q"},"ABB-158":{"points":[[807,1343],[808,1267],[487,1265],[489,1422],[664,1422],[666,1346]],"roomType":"LAB-M","capacity":"24","description":"Modern Languages Resource Room","label":"B158"}},"buildings":{}},"abc1":{"image":"abc1.png","campus":"AB","building":"ABC","buildingLabel":"C","floor":"Main Floor (C1)","rooms":{"ABC-1015":{"points":[[1942,215],[1942,498],[2118,496],[2118,213]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"C1015"},"ABC-1425":{"points":[[2412,1531],[2169,1532],[2167,1707],[2412,1704]],"roomType":"ECLASS-ALC","capacity":"36","description":"Active Learning Classroom","label":"C1425"},"ABC-1427":{"points":[[2412,1709],[2167,1709],[2171,1913],[2412,1913]],"roomType":"LAB-C","capacity":"36","description":"Computer Lab","label":"C1427"},"ABC-1429":{"points":[[2167,2061],[2411,2061],[2411,1917],[2167,1917]],"roomType":"EMEET","capacity":"20","description":"Meeting Room","label":"C1429"},"ABC-1426":{"points":[[2498,1707],[2498,1913],[2745,1915],[2745,1707]],"roomType":"LAB-GD","capacity":"28","description":"GDD - MAC Lab","label":"C1426"},"ABC-1424":{"points":[[2498,1530],[2498,1704],[2743,1704],[2745,1532]],"roomType":"LAB-GD","capacity":"30","description":"GDD - Transmedia studio/classroom","label":"C1424"},"ABC-1422":{"points":[[2498,1359],[2498,1527],[2745,1529],[2743,1359]],"roomType":"LAB-GD","capacity":"30","description":"GDD - Transmedia studio/classroom","label":"C1422"},"ABC-1420":{"points":[[2498,1144],[2498,1353],[2743,1353],[2743,1121],[2700,1121],[2700,1142]],"roomType":"LAB-GD","capacity":"30","description":"POD - Graphic Design","label":"C1420"},"ABC-1419":{"points":[[2364,1357],[2364,1276],[2167,1276],[2166,1357]],"roomType":"LAB-GD","capacity":"0","description":"GDD - Student Support \u0026 EQ Depot","label":"C1419"},"ABC-1417":{"points":[[2413,1186],[2326,1184],[2326,1274],[2411,1274]],"roomType":"LAB-GD","capacity":"0","description":"GDD - Photo Booth","label":"C1417"},"ABC-1402D":{"points":[[2911,940],[2911,908],[2952,868],[2913,830],[2911,799],[2783,798],[2783,879],[2826,881],[2826,940]],"roomType":"MEET","capacity":"8","description":"Meeting Room","label":"C1402D"},"ABC-1133":{"points":[[1113,1276],[1113,1483],[1402,1483],[1402,1274]],"roomType":"LAB-V","capacity":"25","description":"Studio Space","label":"C1133"},"ABC-1127":{"points":[[1070,919],[753,919],[754,1189],[1041,1189],[1070,978]],"roomType":"LAB-V","capacity":"25","description":"Print Media Studio","label":"C1127"},"ABC-1120":{"points":[[1202,794],[1202,901],[1225,901],[1227,1063],[1418,1063],[1418,792]],"roomType":"LAB-V","capacity":"25","description":"New Media Studio (MAC Lab)","label":"C1120"},"ABC-1113":{"points":[[1067,498],[756,500],[758,724],[1067,724]],"roomType":"LAB-V","capacity":"25","description":"Photography Main Studio","label":"C1113"},"ABC-1031":{"points":[[1420,215],[1420,498],[1734,496],[1732,215]],"roomType":"LAB-V","capacity":"25","description":"Foundation Studio","label":"C1031"},"ABC-1042":{"points":[[1745,666],[1745,776],[1991,776],[1991,666]],"roomType":"LAB-V","capacity":"25","description":"Senior Studio","label":"C1042"},"ABC-1043":{"points":[[1426,662],[1426,1002],[1686,1002],[1687,805],[1668,805],[1666,664]],"roomType":"LAB-V","capacity":"25","description":"Painting \u0026 Drawing Studio","label":"C1043"},"ABC-1044":{"points":[[1745,780],[1745,1002],[1992,1003],[1991,780]],"roomType":"LAB-V","capacity":"25","description":"Foundation Studio","label":"C1044"},"ABC-1050":{"points":[[1992,1005],[1841,1005],[1841,1108],[1761,1110],[1761,1182],[1626,1184],[1626,1373],[1994,1373]],"roomType":"LAB-V","capacity":"25","description":"Sculpture Studio","label":"C1050"}},"buildings":{}},"abd1":{"image":"abd1.png","campus":"AB","building":"ABD","buildingLabel":"D","floor":"Main Floor (D1)","rooms":{"ABD-104":{"points":[[1098,1056],[1013,1058],[936,1132],[932,1325],[1053,1446],[1170,1330],[1174,1132]],"roomType":"ECLASS","capacity":"40","description":"Classroom - Touch Screen","label":"D104"},"ABD-119":{"points":[[1219,847],[1219,878],[1237,896],[1238,1085],[1363,1085],[1410,1040],[1439,1040],[1523,957],[1413,845]],"roomType":"ECLASS-ALC","capacity":"40","description":"Active Learning Classroom","label":"D119"},"ABD-121":{"points":[[1603,928],[1467,1062],[1469,1127],[1574,1231],[1635,1231],[1738,1129],[1741,1064]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"D121"},"ABD-122":{"points":[[1743,1732],[1803,1732],[1938,1599],[1806,1464],[1806,1433],[1741,1433],[1741,1467],[1610,1601]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"D122"},"ABD-122B":{"points":[[1502,1502],[1603,1597],[1738,1464],[1738,1397],[1671,1334]],"roomType":"ECLASS-SEMINAR","capacity":"18","description":"Classroom","label":"D122B"},"ABD-123":{"points":[[1740,791],[1806,790],[1940,923],[1806,1058],[1799,1094],[1743,1092],[1741,1058],[1606,923]],"roomType":"ECLASS-HYX","capacity":"40","description":"Hyflex Classroom","label":"D123"},"ABD-124":{"points":[[1810,1462],[1940,1595],[2107,1435],[1974,1296],[1909,1296],[1806,1399]],"roomType":"ECLASS-ALC","capacity":"36","description":"Active Learning Classroom","label":"D124"},"ABD-134":{"points":[[2417,1085],[2565,1087],[2607,1125],[2607,1321],[2376,1323],[2372,1132]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"D134"},"ABD-136":{"points":[[2657,1085],[2612,1129],[2610,1320],[2800,1327],[2850,1271],[2848,1085]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"D136"},"ABD-138":{"points":[[2610,891],[2610,1038],[2655,1080],[2847,1080],[2845,849],[2655,845]],"roomType":"ECLASS","capacity":"40","description":"","label":"D138"},"ABD-139":{"points":[[2398,606],[2394,824],[2419,845],[2567,845],[2612,799],[2612,608]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"D139"},"ABD-137":{"points":[[2133,859],[2348,859],[2393,827],[2395,606],[2189,606],[2133,657]],"roomType":"SPPR","capacity":"36","description":"Indigenous focused classroom","label":"D137"},"ABD-133":{"points":[[2131,861],[2133,1034],[2180,1085],[2292,1085],[2290,861]],"roomType":"SPPR","capacity":"20","description":"Indigenous focused gathering space","label":"D133"},"ABD-115":{"points":[[1173,605],[1173,798],[1216,843],[1411,843],[1411,659],[1357,605]],"roomType":"LAB-TH","capacity":"18","description":"Theatre Media Lab","label":"D115"},"ABD-113":{"points":[[1054,487],[933,605],[935,799],[1011,875],[1025,859],[1081,861],[1095,875],[1171,801],[1171,601]],"roomType":"LAB-TH","capacity":"24","description":"Theatre Wardrobe","label":"D113"},"ABD-105":{"points":[[574,964],[693,1086],[846,1085],[866,1104],[962,1007],[947,994],[947,937],[964,924],[886,846],[693,846]],"roomType":"LAB-TH","capacity":"36","description":"Theatre Performance Lab","label":"D105"}},"buildings":{}},"abd2":{"image":"abd2.png","campus":"AB","building":"ABD","buildingLabel":"D","floor":"2nd Floor (D2)","rooms":{"ABD-204":{"points":[[983,1109],[983,1302],[1217,1303],[1220,1109],[1152,1044],[1044,1044]],"roomType":"LAB-C","capacity":"36","description":"Computer Lab","label":"D204"},"ABD-213":{"points":[[887,822],[746,822],[746,627],[788,586],[1028,588],[1026,790],[916,790]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"D213"},"ABD-215":{"points":[[1031,584],[1028,822],[1047,840],[1156,844],[1190,808],[1188,584]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"D215"},"ABD-217":{"points":[[1193,586],[1408,584],[1458,633],[1457,822],[1266,822],[1219,869],[1177,826],[1193,800]],"roomType":"ECLASS","capacity":"54","description":"Classroom","label":"D217"},"ABD-219":{"points":[[1201,891],[1201,992],[1267,1060],[1412,1062],[1460,1017],[1458,827],[1266,826]],"roomType":"ECLASS","capacity":"46","description":"Classroom","label":"D219"},"ABD-221":{"points":[[1514,1103],[1619,1206],[1770,1208],[1794,1186],[1792,1109],[1615,936],[1516,1033]],"roomType":"LAB-C CIS","capacity":"36","description":"CIS Computer Lab","label":"D221"},"ABD-223":{"points":[[1792,1103],[1853,1103],[2019,937],[1853,773],[1783,772],[1617,932]],"roomType":"LAB-C","capacity":"36","description":"Computer Lab","label":"D223"},"ABD-225":{"points":[[1846,1109],[1848,1186],[1875,1208],[2021,1208],[2122,1105],[2125,1029],[2023,939]],"roomType":"ECLASS-HYX","capacity":"40","description":"Hyflex Classroom","label":"D225"},"ABD-226":{"points":[[1788,1379],[1621,1543],[1785,1711],[1859,1711],[2023,1545],[1853,1381]],"roomType":"LAB-C","capacity":"36","description":"Computer Lab","label":"D226"},"ABD-228":{"points":[[1868,1271],[1848,1294],[1850,1374],[2024,1543],[2156,1413],[2021,1275]],"roomType":"LAB-C","capacity":"26","description":"Computer Lab","label":"D228"},"ABD-242":{"points":[[2466,1062],[2423,1107],[2425,1302],[2655,1302],[2654,1123],[2591,1060]],"roomType":"LAB-C","capacity":"36","description":"Computer Lab","label":"D242"},"ABD-248":{"points":[[2749,1033],[2657,1125],[2657,1302],[2843,1303],[2897,1249],[2895,1064],[2783,1064]],"roomType":"LAB-C","capacity":"26","description":"Computer Lab","label":"D248"},"ABD-238":{"points":[[2416,1206],[2254,1270],[2315,1417],[2416,1375]],"roomType":"LAB-M","capacity":"16","description":"MOLA Seminar","label":"D238"}},"buildings":{}},"abk1":{"image":"abk1.png","campus":"AB","building":"ABK","buildingLabel":"K","floor":"Main Floor (K1)","rooms":{"ABK-149":{"points":[[1523,618],[1523,579],[1231,580],[1231,909],[1269,910],[1269,959],[1498,955],[1496,618]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"K149"},"ABK-151":{"points":[[964,963],[963,1240],[1211,1240],[1211,964]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"K151"},"ABK-153":{"points":[[1269,961],[1269,1242],[1522,1240],[1520,959]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"K153"},"ABK-155":{"points":[[1776,961],[1525,957],[1525,1238],[1778,1240]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"K155"},"ABK-158":{"points":[[1794,582],[1621,580],[1622,618],[1502,620],[1500,954],[1790,954]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"K158"},"ABK-160":{"points":[[2158,1300],[2136,1300],[2133,983],[1895,981],[1897,1345],[2156,1348]],"roomType":"ECLASS","capacity":"36","description":"POD Classroom","label":"K160"},"ABK-162":{"points":[[2174,905],[2176,624],[2526,620],[2526,968],[2142,968],[2140,907]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"K162"},"ABK-167":{"points":[[2513,1251],[2511,972],[2142,973],[2140,1251]],"roomType":"ECLASS","capacity":"48","description":"Classroom","label":"K167"},"ABK-150":{"points":[[964,1610],[960,1399],[1000,1399],[998,1339],[1372,1341],[1372,1348],[1561,1348],[1561,1337],[1738,1339],[1740,1541],[1779,1543],[1779,1610]],"roomType":"SPPR","capacity":"40","description":"South Patio","label":"K150"}},"buildings":{}},"abb2":{"image":"abb2.png","campus":"AB","building":"ABB","buildingLabel":"B","floor":"2nd Floor (B2)","rooms":{"ABB-201":{"points":[[2276,1030],[2512,1029],[2534,1047],[2494,1092],[2404,1094],[2402,1209],[2492,1209],[2534,1251],[2516,1267],[2518,1312],[2534,1328],[2518,1346],[2518,1505],[2276,1505]],"roomType":"HALL","capacity":"50","description":"Alumni Hall","label":"B201"},"ABB-211S":{"points":[[1722,1169],[1568,1168],[1566,1249],[1722,1249]],"roomType":"MEET","capacity":"10","description":"Meeting Room","label":"B211S"}},"buildings":{}},"abb3":{"image":"abb3.png","campus":"AB","building":"ABB","buildingLabel":"B","floor":"3rd Floor (B3)","rooms":{},"buildings":{}},"abb4":{"image":"abb4.png","campus":"AB","building":"ABB","buildingLabel":"B","floor":"4th Floor (B4)","rooms":{},"buildings":{}},"abc2":{"image":"abc2.png","campus":"AB","building":"ABC","buildingLabel":"C","floor":"2nd Floor (C2)","rooms":{"ABC-2433":{"points":[[1732,1509],[1734,1653],[1828,1653],[1828,1509]],"roomType":"MEET","capacity":"8","description":"Meeting room","label":"C2433"}},"buildings":{}},"abd3":{"image":"abd3.png","campus":"AB","building":"ABD","buildingLabel":"D","floor":"3rd Floor (D3)","rooms":{},"buildings":{}},"abe1":{"image":"abe1.png","campus":"AB","building":"ABE","buildingLabel":"E","floor":"Main Floor (E1)","rooms":{},"buildings":{}},"abf1":{"image":"abf1.png","campus":"AB","building":"ABF","buildingLabel":"F","floor":"Main Floor (F1)","rooms":{},"buildings":{}},"abg1":{"image":"abg1.png","campus":"AB","building":"ABG","buildingLabel":"G","floor":"Main Floor (G1)","rooms":{"ABG-H102":{"points":[[2323,617],[2323,772],[2342,846],[2379,892],[2422,920],[2483,933],[2521,931],[2521,816],[2633,814],[2635,763],[2624,713],[2588,661],[2539,623],[2465,614]],"roomType":"HALL","capacity":"50","description":"Library Hallway Rotunda - East end","label":"GH102"}},"buildings":{}},"abg2":{"image":"abg2.png","campus":"AB","building":"ABG","buildingLabel":"G","floor":"2nd Floor (G2)","rooms":{},"buildings":{}},"abh0":{"image":"abh0.png","campus":"AB","building":"ABH","buildingLabel":"H","floor":"Parking Level (H0)","rooms":{},"buildings":{}},"abh1":{"image":"abh1.png","campus":"AB","building":"ABH","buildingLabel":"H","floor":"Main Floor (H1)","rooms":{},"buildings":{}},"abh2":{"image":"abh2.png","campus":"AB","building":"ABH","buildingLabel":"H","floor":"2nd Floor (H2)","rooms":{},"buildings":{}},"abh3":{"image":"abh3.png","campus":"AB","building":"ABH","buildingLabel":"H","floor":"3rd Floor (H3)","rooms":{},"buildings":{}},"abh4":{"image":"abh4.png","campus":"AB","building":"ABH","buildingLabel":"H","floor":"4th Floor (H4)","rooms":{},"buildings":{}},"abj1":{"image":"abj1.png","campus":"AB","building":"ABJ","buildingLabel":"J","floor":"Main Floor (J1)","rooms":{},"buildings":{}},"abj2":{"image":"abj2.png","campus":"AB","building":"ABJ","buildingLabel":"J","floor":"2nd Floor (J2)","rooms":{},"buildings":{}},"abj3":{"image":"abj3.png","campus":"AB","building":"ABJ","buildingLabel":"J","floor":"3rd Floor (J3)","rooms":{},"buildings":{}},"abj4":{"image":"abj4.png","campus":"AB","building":"ABJ","buildingLabel":"J","floor":"4th Floor (J4)","rooms":{},"buildings":{}},"abj5":{"image":"abj5.png","campus":"AB","building":"ABJ","buildingLabel":"J","floor":"5th Floor (J5)","rooms":{},"buildings":{}},"abj6":{"image":"abj6.png","campus":"AB","building":"ABJ","buildingLabel":"J","floor":"6th Floor (J6)","rooms":{},"buildings":{}},"abk0":{"image":"abk0.png","campus":"AB","building":"ABK","buildingLabel":"K","floor":"Basement Floor (K0)","rooms":{},"buildings":{}},"abs1":{"image":"abs1.png","campus":"AB","building":"ABS","buildingLabel":"S","floor":"Main Floor (S1)","rooms":{},"buildings":{}},"abs2":{"image":"abs2.png","campus":"AB","building":"ABS","buildingLabel":"S","floor":"2nd Floor (S2)","rooms":{},"buildings":{}},"abs3":{"image":"abs3.png","campus":"AB","building":"ABS","buildingLabel":"S","floor":"3rd Floor (S3)","rooms":{"ABS-3123B":{"points":[[1270,417],[1509,417],[1507,260],[1272,262]],"roomType":"MEET","capacity":"8","description":"Meeting room","label":"S3123B"}},"buildings":{}},"abt1":{"image":"abt1.png","campus":"AB","building":"ABT","buildingLabel":"T","floor":"Main Floor (T1)","rooms":{},"buildings":{}},"cepa0":{"image":"cepa0.png","campus":"CEP","building":"CEPA","buildingLabel":"A","floor":"Basement Floor (A0)","rooms":{"CEPA-0018":{"points":[[1052,1006],[1052,858],[1285,858],[1285,1006]],"roomType":"ECLASS","capacity":"30","description":"Classroom","label":"A0018"},"CEPA-0020":{"points":[[1323,852],[1321,695],[1234,697],[1234,706],[1052,706],[1052,855]],"roomType":"ECLASS","capacity":"28","description":"Classroom","label":"A0020"},"CEPA-0022":{"points":[[1323,1037],[1511,1037],[1511,696],[1323,697]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A0022"},"CEPA-0024":{"points":[[1749,1038],[1747,697],[1512,697],[1514,1038]],"roomType":"LAB-C","capacity":"36","description":"Computer Lab","label":"A0024"}},"buildings":{}},"cepa1":{"image":"cepa1.png","campus":"CEP","building":"CEPA","buildingLabel":"A","floor":"Main Floor (A1)","rooms":{"CEPA-1103":{"points":[[128,624],[128,805],[279,805],[281,624]],"roomType":"LAB-PG","capacity":"24","description":"Physics/Geography Dry Lab","label":"A1103"},"CEPA-1105":{"points":[[330,625],[330,804],[484,804],[482,625]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A1105"},"CEPA-1110":{"points":[[36,1155],[36,1334],[388,1334],[390,1243],[346,1242],[346,1198],[390,1197],[392,1153]],"roomType":"LAB-CH","capacity":"28","description":"Priority Booking Chemistry Lab (High level Wet)","label":"A1110"},"CEPA-1314":{"points":[[1310,841],[1310,674],[1487,674],[1487,841]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"A1314"},"CEPA-1316":{"points":[[1489,841],[1664,841],[1666,675],[1489,674]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A1316"},"CEPA-1354":{"points":[[2020,653],[2169,654],[2169,844],[2018,843]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A1354"},"CEPA-1355":{"points":[[2198,653],[2198,510],[2020,509],[2020,651]],"roomType":"ECLASS","capacity":"32","description":"Classroom","label":"A1355"},"CEPA-1360":{"points":[[2315,675],[2315,806],[2552,808],[2552,675]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A1360"},"CEPA-1362":{"points":[[2553,809],[2788,809],[2788,674],[2553,674]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A1362"},"CEPA-1364":{"points":[[3024,808],[3024,676],[2790,675],[2790,809]],"roomType":"LAB-K","capacity":"36","description":"KIN Lab","label":"A1364"},"CEPA-1415":{"points":[[2076,1807],[2251,1808],[2251,1633],[2085,1633],[2085,1716],[2076,1716]],"roomType":"ECLASS-UUNP","capacity":"30","description":"Classroom-Dedicated UUNP","label":"A1415"},"CEPA-1424":{"points":[[1928,1427],[1930,1571],[2105,1571],[2105,1427]],"roomType":"ECLASS","capacity":"36","description":"Classroom","label":"A1424"},"CEPA-1454":{"points":[[2644,1310],[2698,1310],[2698,1160],[2552,1160],[2552,1292],[2644,1294]],"roomType":"CLASS-SEMINAR","capacity":"24","description":"Dedicated - Aboriginal Access","label":"A1454"},"CEPA-1457":{"points":[[2699,1429],[3028,1429],[3028,1160],[2699,1158]],"roomType":"SPPR","capacity":"286","description":"Gathering Place","label":"A1457"},"CEPA-H1100":{"points":[[543,805],[895,804],[897,1163],[543,1165]],"roomType":"HALL","capacity":"432","description":"West Atrium - Main Entrance Hallway","label":"AH1100"},"CEPA-H1300":{"points":[[1695,946],[1696,843],[955,841],[955,937],[1025,937],[1039,973],[1193,974],[1193,946]],"roomType":"HALL","capacity":"216","description":"East Atrium hall area","label":"AH1300"}},"buildings":{}},"cepa2":{"image":"cepa2.png","campus":"CEP","building":"CEPA","buildingLabel":"A","floor":"2nd Floor (A2)","rooms":{"CEPA-2105":{"points":[[635,565],[635,746],[244,746],[245,565]],"roomType":"LAB-G","capacity":"32","description":"Low Level Wet lab - AGRI, GEOG, UUP","label":"A2105"},"CEPA-2111":{"points":[[621,1101],[621,1283],[245,1281],[247,1101]],"roomType":"LAB-B","capacity":"24","description":"Biology Lab","label":"A2111"},"CEPA-2201":{"points":[[1346,1101],[1103,1103],[1104,917],[1346,917]],"roomType":"ECLASS","capacity":"60","description":"Classroom","label":"A2201"},"CEPA-2203":{"points":[[1202,1286],[1346,1288],[1346,1102],[1202,1104]],"roomType":"ECLASS","capacity":"24","description":"Classroom","label":"A2203"},"CEPA-2204":{"points":[[1386,917],[1386,1105],[1732,1105],[1732,1027],[1808,1029],[1808,917]],"roomType":"LAB-D","capacity":"24","description":"Dental Clinic/Operatory","label":"A2204"},"CEPA-2207":{"points":[[1162,1339],[1164,1523],[987,1523],[987,1339]],"roomType":"ECLASS","capacity":"42","description":"Classroom","label":"A2207"},"CEPA-2209":{"points":[[1166,1523],[1341,1523],[1341,1339],[1164,1339]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"A2209"},"CEPA-2211":{"points":[[1343,1523],[1518,1523],[1516,1338],[1343,1338]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"A2211"},"CEPA-2213":{"points":[[1520,1523],[1696,1523],[1695,1339],[1518,1339]],"roomType":"ECLASS","capacity":"40","description":"Classroom","label":"A2213"},"CEPA-2215":{"points":[[1698,1523],[1900,1523],[1900,1339],[1698,1339]],"roomType":"ECLASS","capacity":"50","description":"Classroom","label":"A2215"},"CEPA-2304":{"points":[[1429,797],[1518,797],[1516,714],[1431,713]],"roomType":"LAB-N","capacity":"2","description":"Simulation/Patient Room","label":"A2304"},"CEPA-2308":{"points":[[1608,797],[1696,799],[1695,713],[1608,714]],"roomType":"LAB-N","capacity":"2","description":"Simulation/Patient Room","label":"A2308"},"CEPA-2313":{"points":[[1359,561],[1438,560],[1438,548],[1489,548],[1489,447],[1359,448]],"roomType":"LAB-N","capacity":"2","description":"Drop in lab","label":"A2313"},"CEPA-2314":{"points":[[1785,714],[1785,797],[1873,797],[1871,714]],"roomType":"LAB-N","capacity":"2","description":"Simulation/Patient Room","label":"A2314"},"CEPA-2315":{"points":[[1388,673],[1489,673],[1489,551],[1440,551],[1440,562],[1388,563]],"roomType":"LAB-N","capacity":"2","description":"Simulation/Patient Room","label":"A2315"},"CEPA-2317":{"points":[[1490,673],[1667,673],[1666,448],[1490,448]],"roomType":"LAB-N","capacity":"16","description":"Nursing Lab","label":"A2317"},"CEPA-2321":{"points":[[1725,672],[1901,672],[1901,445],[1725,447]],"roomType":"LAB-N","capacity":"16","description":"Nursing Lab","label":"A2321"},"CEPA-2325":{"points":[[2051,674],[2228,674],[2228,448],[2051,448]],"roomType":"LAB-N","capacity":"16","description":"Nursing Lab","label":"A2325"},"CEPA-2327":{"points":[[2231,672],[2408,672],[2405,447],[2230,447]],"roomType":"LAB-N","capacity":"16","description":"Nursing Lab","label":"A2327"},"CEPA-2416":{"points":[[2259,1661],[2317,1663],[2317,1604],[2259,1604]],"roomType":"MEET","capacity":"16","description":"Meeting Room","label":"A2416"},"CEPA-2428":{"points":[[2140,1512],[2317,1512],[2317,1368],[2139,1368]],"roomType":"MEET","capacity":"24","description":"Meeting Room","label":"A2428"},"CEPA-H2100":{"points":[[563,1048],[563,1100],[758,1102],[756,750],[563,750],[563,802],[632,802],[633,1047]],"roomType":"HALL","capacity":"50","description":"West Atrium 2nd floor - outside A2106 Hallway","label":"AH2100"}},"buildings":{}},"cepa3":{"image":"cepa3.png","campus":"CEP","building":"CEPA","buildingLabel":"A","floor":"3rd Floor (A3)","rooms":{"CEPA-3436":{"points":[[2175,1409],[2262,1409],[2262,1288],[2175,1288]],"roomType":"MEET","capacity":"8","description":"Meeting Room","label":"A3436"}},"buildings":{}},"ceph1":{"image":"ceph1.png","campus":"CEP","building":"CEPH","buildingLabel":"H","floor":"Main Floor (H1)","rooms":{},"buildings":{}},"cepq1":{"image":"cepq1.png","campus":"CEP","building":"CEPQ","buildingLabel":"Q","floor":"Main Floor (Q1)","rooms":{},"buildings":{}},"cepr1":{"image":"cepr1.png","campus":"CEP","building":"CEPR","buildingLabel":"R","floor":"Main Floor (R1)","rooms":{},"buildings":{}},"ceps1":{"image":"ceps1.png","campus":"CEP","building":"CEPS","buildingLabel":"S","floor":"Main Floor (S1)","rooms":{},"buildings":{}},"ceps2":{"image":"ceps2.png","campus":"CEP","building":"CEPS","buildingLabel":"S","floor":"2nd Floor (S2)","rooms":{"CEPS-203":{"points":[[879,637],[1173,635],[1177,270],[881,270]],"roomType":"ECLASS","capacity":"33","description":"Building Trades Classroom","label":"S203"},"CEPS-206":{"points":[[1225,1528],[1225,1824],[1725,1824],[1723,1528]],"roomType":"ECLASS","capacity":"25","description":"Building Trades Classroom","label":"S206"},"CEPS-209":{"points":[[880,638],[1172,637],[1174,884],[878,884]],"roomType":"ECLASS","capacity":"40","description":"Building Trades Classroom","label":"S209"},"CEPS-211":{"points":[[1407,565],[1736,567],[1736,469],[2109,468],[2111,267],[1497,267],[1497,278],[1407,280]],"roomType":"LAB-T","capacity":"60","description":"Trades Lab","label":"S211"}},"buildings":{}},"cept1":{"image":"cept1.png","campus":"CEP","building":"CEPT","buildingLabel":"T","floor":"Main Floor (T1)","rooms":{"CEPT-1001":{"points":[[2707,1080],[2707,916],[2539,916],[2539,1080]],"roomType":"ECLASS","capacity":"36","description":"Classroom (Electrical)","label":"T1001"},"CEPT-1011":{"points":[[2467,1405],[2712,1405],[2710,1082],[2465,1082]],"roomType":"CLASS","capacity":"50","description":"Trades Shop (Electrical)","label":"T1011"},"CEPT-1024":{"points":[[2434,803],[2517,803],[2517,684],[2434,684]],"roomType":"MEET","capacity":"10","description":"Meeting Room","label":"T1024"},"CEPT-1287":{"points":[[1769,1595],[1929,1595],[1931,1485],[1769,1485]],"roomType":"ECLASS","capacity":"36","description":"Trades Classroom","label":"T1287"},"CEPT-1282":{"points":[[1678,1538],[1678,1353],[1523,1353],[1523,1538]],"roomType":"ECLASS","capacity":"24","description":"Trades Classroom","label":"T1282"},"CEPT-1281":{"points":[[1769,1397],[1769,1431],[1960,1431],[1960,1274],[1832,1274],[1832,1397]],"roomType":"ECLASS","capacity":"36","description":"Trades Classroom","label":"T1281"},"CEPT-1280":{"points":[[1678,1233],[1521,1233],[1523,1350],[1678,1350]],"roomType":"ECLASS","capacity":"25","description":"Trades Classroom","label":"T1280"},"CEPT-1212":{"points":[[1242,1155],[1243,1305],[1344,1305],[1344,1155]],"roomType":"CLASS","capacity":"18","description":"Trades Classroom","label":"T1212"},"CEPT-1201":{"points":[[1769,1273],[1927,1273],[1927,1159],[1769,1159]],"roomType":"ECLASS","capacity":"24","description":"Trades Classroom (Plumbing)","label":"T1201"},"CEPT-1124":{"points":[[1516,1154],[1678,1154],[1678,1035],[1516,1035]],"roomType":"ECLASS","capacity":"25","description":"Trades Classroom","label":"T1124"},"CEPT-1122":{"points":[[1516,915],[1678,915],[1678,1032],[1516,1032]],"roomType":"ECLASS","capacity":"25","description":"Trades Classroom","label":"T1122"},"CEPT-1112":{"points":[[1469,796],[1469,915],[1678,914],[1678,894],[1657,868],[1638,845],[1622,823],[1604,796]],"roomType":"ECLASS","capacity":"36","description":"Trades Classroom (Auto)","label":"T1112"},"CEPT-1053":{"points":[[2111,917],[2111,1084],[2227,1084],[2227,917]],"roomType":"ECLASS","capacity":"36","description":"Trades Classroom","label":"T1053"},"CEPT-1033":{"points":[[2113,1272],[2425,1274],[2425,1084],[2111,1086]],"roomType":"LAB-T","capacity":"50","description":"Trades Lab - Laptop Required","label":"T1033"},"CEPT-H1000":{"points":[[2660,760],[2624,805],[1902,805],[1880,917],[2712,917],[2708,781],[2687,781]],"roomType":"HALL","capacity":"5","description":"Hallway","label":"TH1000"}},"buildings":{}},"cept2":{"image":"cept2.png","campus":"CEP","building":"CEPT","buildingLabel":"T","floor":"2nd Floor (T2)","rooms":{"CEPT-2001":{"points":[[1075,1129],[791,1129],[793,1360],[1075,1359]],"roomType":"LAB-C","capacity":"26","description":"Trades Computer Lab","label":"T2001"},"CEPT-2015":{"points":[[1312,628],[1312,807],[1541,807],[1541,628]],"roomType":"ECLASS","capacity":"24","description":"Trades Classroom","label":"T2015"},"CEPT-2030":{"points":[[1622,996],[1624,1166],[1832,1166],[1834,996]],"roomType":"ECLASS","capacity":"36","description":"Trades Classroom (Electronics)","label":"T2030"},"CEPT-2031":{"points":[[1630,944],[1677,944],[1677,948],[1969,948],[1969,794],[2016,794],[2016,626],[1630,626]],"roomType":"LAB-T","capacity":"50","description":"Electronics Lab","label":"T2031"}},"buildings":{}},"cepv1":{"image":"cepv1.png","campus":"CEP","building":"CEPV","buildingLabel":"V","floor":"Main Floor (V1)","rooms":{"CEPV-107":{"points":[[1763,1142],[1765,1455],[2175,1453],[2171,1142]],"roomType":"ECLASS-AGRI","capacity":"40","description":"Classroom - Agriculture","label":"V107"},"CEPV-108":{"points":[[1761,747],[1761,1058],[2173,1058],[2173,744]],"roomType":"ECLASS-CE","capacity":"32","description":"CE Classroom","label":"V108"},"CEPV-111":{"points":[[1343,1143],[1344,1455],[1763,1455],[1761,1143]],"roomType":"ECLASS-CE","capacity":"36","description":"Classroom - Industry Services","label":"V111"},"CEPV-112":{"points":[[1344,746],[1344,1056],[1760,1058],[1758,746]],"roomType":"SPPR","capacity":"36","description":"Athletics","label":"V112"},"CEPV-115":{"points":[[1094,1142],[1094,1454],[1341,1453],[1341,1142]],"roomType":"ECLASS","capacity":"32","description":"Classroom","label":"V115"},"CEPV-116":{"points":[[929,747],[927,1057],[1341,1057],[1341,747]],"roomType":"LAB-C CE","capacity":"24","description":"CE - Computer Lab","label":"V116"}},"buildings":{}},"cepw1":{"image":"cepw1.png","campus":"CEP","building":"CEPW","buildingLabel":"W","floor":"Main Floor (W1)","rooms":{},"buildings":{}},"outside-ab":{"image":"outside-ab.png","campus":"AB","building":"OUTSIDE","buildingLabel":"Outside","floor":"Campus Map","rooms":{"ABY-YURT":{"points":[[953,1648],[989,1648],[988,1683],[953,1683]],"roomType":"SPPR","capacity":"26","description":"YURT","label":"ABY - YURT"},"ABS-INTG":{"points":[[919,1959],[1010,1960],[1010,2051],[919,2051]],"roomType":"SPPR","capacity":"50","description":"Indigenous Teaching Garden","label":"INTG - Indigenous Teaching Garden"}},"buildings":{"ABT":{"points":[[1309,1718],[1409,1718],[1408,1616],[1381,1615],[1380,1686],[1309,1687]],"label":"Building T"},"ABJ":{"points":[[1557,1884],[1575,1828],[1579,1828],[1678,1679],[1697,1692],[1820,1741],[1816,1791],[1714,1750],[1700,1770],[1793,1837],[1766,1879],[1672,1813],[1655,1837],[1728,1920],[1687,1938],[1625,1872],[1603,1855],[1592,1895]],"label":"Building J"},"ABH":{"points":[[1775,2211],[1756,2194],[1762,2186],[1741,2167],[1831,2053],[1828,2049],[1836,2038],[1841,2041],[1906,1847],[1912,1850],[1915,1842],[1939,1849],[1938,1858],[1963,1867],[1900,2057],[1893,2054],[1890,2066],[1896,2068],[1891,2079],[1894,2085],[1885,2096],[1877,2089],[1871,2095],[1875,2099],[1787,2205],[1784,2203]],"label":"Building H"},"ABB":{"points":[[1023,1102],[907,1223],[914,1229],[909,1235],[907,1233],[897,1243],[879,1228],[801,1311],[926,1429],[946,1410],[954,1417],[1045,1319],[1024,1298],[1096,1222],[1101,1227],[1108,1220],[1121,1219],[1120,1208],[1127,1200],[1100,1172],[1100,1157],[1083,1159]],"label":"Building B"},"ABA":{"points":[[1154,1141],[1151,1070],[1135,1070],[1135,1054],[1151,1054],[1150,1062],[1165,1063],[1165,1035],[1276,1031],[1277,1043],[1288,1043],[1288,1066],[1455,1062],[1455,1073],[1465,1075],[1465,1098],[1493,1098],[1493,1085],[1639,1080],[1721,994],[1747,1017],[1750,1015],[1757,1015],[1758,1023],[1756,1027],[1789,1059],[1708,1146],[1697,1135],[1688,1143],[1692,1146],[1685,1153],[1684,1161],[1677,1161],[1670,1169],[1662,1162],[1637,1163],[1637,1175],[1495,1178],[1492,1155],[1273,1162],[1272,1148],[1261,1149],[1261,1139]],"label":"Building A"},"ABC":{"points":[[773,1426],[768,1423],[768,1414],[759,1414],[754,1410],[745,1422],[725,1403],[696,1433],[683,1424],[685,1419],[683,1418],[682,1409],[674,1409],[669,1405],[659,1416],[643,1402],[514,1538],[528,1552],[506,1578],[520,1592],[497,1617],[576,1690],[645,1619],[664,1637],[726,1570],[681,1528],[694,1513],[715,1530],[716,1529],[816,1621],[877,1557],[757,1445]],"label":"Building C"},"ABD":{"points":[[1093,1702],[1094,1674],[1086,1666],[1093,1660],[1098,1666],[1129,1664],[1128,1602],[1119,1592],[1063,1594],[1058,1587],[1096,1546],[1095,1533],[1065,1505],[1070,1501],[1073,1502],[1086,1486],[1114,1485],[1122,1477],[1121,1450],[1137,1430],[1119,1413],[1120,1385],[1109,1375],[1084,1379],[1064,1361],[1046,1379],[1019,1379],[1023,1383],[1015,1390],[1009,1390],[1011,1416],[994,1434],[1011,1450],[1004,1452],[991,1485],[997,1492],[954,1539],[954,1549],[1001,1594],[995,1601],[1009,1632],[1019,1633],[1022,1696],[1031,1704]],"label":"Building D"},"ABE":{"points":[[1389,1748],[1394,1749],[1395,1746],[1442,1739],[1450,1747],[1438,1783],[1444,1784],[1443,1799],[1436,1799],[1436,1820],[1456,1820],[1456,1835],[1459,1835],[1459,1924],[1478,1934],[1459,1968],[1473,1977],[1424,2061],[1412,2054],[1411,2065],[1272,2067],[1271,2029],[1241,2029],[1240,1948],[1272,1948],[1272,1911],[1280,1911],[1280,1795],[1277,1795],[1266,1771],[1272,1764],[1334,1769],[1335,1774],[1394,1765]],"label":"Building E"},"ABF":{"points":[[1753,1576],[1788,1576],[1788,1582],[1804,1582],[1804,1597],[1821,1597],[1821,1582],[1836,1582],[1836,1575],[1871,1575],[1871,1612],[1890,1612],[1890,1643],[1873,1643],[1871,1651],[1837,1650],[1836,1624],[1822,1624],[1821,1631],[1806,1630],[1806,1628],[1791,1627],[1789,1653],[1754,1653],[1753,1635],[1750,1634],[1750,1628],[1753,1628]],"label":"Building F"},"ABG":{"points":[[1539,1415],[1553,1440],[1575,1465],[1598,1485],[1631,1504],[1629,1511],[1695,1521],[1696,1501],[1731,1501],[1731,1489],[1734,1489],[1732,1412],[1746,1412],[1746,1405],[1752,1405],[1752,1389],[1738,1391],[1738,1387],[1734,1387],[1734,1381],[1739,1381],[1738,1359],[1732,1359],[1732,1347],[1715,1347],[1710,1336],[1701,1327],[1689,1324],[1689,1312],[1675,1312],[1674,1322],[1667,1322],[1666,1304],[1668,1304],[1668,1277],[1649,1276],[1649,1280],[1631,1280],[1631,1262],[1537,1264],[1536,1291],[1541,1291],[1541,1297],[1492,1299],[1492,1334],[1479,1334],[1479,1353],[1516,1354],[1520,1385],[1530,1417]],"label":"Building G"},"ABS":{"points":[[1139,1971],[1165,1971],[1165,1967],[1173,1967],[1173,1957],[1180,1955],[1181,1812],[1186,1812],[1199,1787],[1169,1770],[1166,1771],[1165,1759],[1074,1759],[1074,1756],[1027,1756],[1026,1771],[1025,1771],[1008,1784],[1008,1787],[1004,1787],[1004,1812],[1026,1812],[1026,1836],[1034,1836],[1034,1955],[1138,1955]],"label":"Building S"},"ABK":{"points":[[137,616],[137,585],[142,586],[142,505],[144,505],[144,493],[142,494],[142,426],[145,426],[145,409],[141,409],[142,338],[165,338],[166,342],[180,342],[180,339],[194,338],[194,342],[208,342],[208,338],[222,337],[223,342],[252,342],[252,366],[258,380],[258,428],[266,442],[267,460],[263,474],[255,481],[255,522],[248,549],[214,550],[214,616]],"label":"Building K"}}},"outside-cep":{"image":"outside-cep.png","campus":"CEP","building":"OUTSIDE","buildingLabel":"Outside","floor":"Campus Map","rooms":{},"buildings":{"CEPA":{"points":[[1019,1195],[1017,1035],[1005,1033],[1004,1018],[1021,1017],[1021,831],[995,831],[995,823],[979,824],[979,820],[984,818],[984,808],[977,807],[978,773],[998,772],[999,764],[1005,763],[1004,696],[975,696],[975,701],[925,701],[926,696],[896,695],[896,763],[905,763],[906,772],[921,773],[920,828],[866,825],[866,943],[883,943],[884,957],[828,957],[827,1026],[883,1026],[882,1142],[924,1141],[924,1028],[993,1026],[993,1035],[975,1035],[975,1195]],"label":"Building A"},"CEPW":{"points":[[928,1524],[928,1462],[856,1461],[855,1445],[842,1444],[842,1460],[726,1461],[726,1524]],"label":"Building W"},"CEPV":{"points":[[500,1038],[558,1038],[559,1182],[501,1182]],"label":"Building V"},"CEPT":{"points":[[1108,115],[1145,114],[1145,125],[1303,125],[1303,128],[1317,128],[1317,124],[1347,124],[1348,177],[1366,200],[1349,198],[1348,289],[1243,290],[1243,307],[1223,287],[1142,286],[1142,269],[1116,269],[1116,131],[1106,131]],"label":"Building T"},"CEPS":{"points":[[847,253],[847,143],[948,144],[948,153],[954,153],[955,168],[947,169],[947,253]],"label":"Building S"},"CEPR":{"points":[[341,894],[339,878],[352,877],[340,702],[329,703],[328,687],[251,691],[251,701],[260,700],[273,888],[263,889],[264,899]],"label":"Building R"},"CEPQ":{"points":[[294,1036],[339,1031],[335,996],[326,997],[319,952],[285,955],[289,993],[270,995],[273,1029],[293,1026]],"label":"Building Q"},"CEPH":{"points":[[132,1286],[208,1285],[209,1222],[189,1221],[189,1185],[195,1185],[196,1162],[200,1161],[200,1004],[89,1004],[89,1055],[147,1056],[147,1162],[152,1162],[152,1185],[162,1185],[162,1221],[132,1222]],"label":"Building H"}}}}},"plans":{"aba2":"floorplans/aba2.png","aba3":"floorplans/aba3.png","aba4":"floorplans/aba4.png","abb1":"floorplans/abb1.png","abc1":"floorplans/abc1.png","abd1":"floorplans/abd1.png","abd2":"floorplans/abd2.png","abk1":"floorplans/abk1.png","abb2":"floorplans/abb2.png","abb3":"floorplans/abb3.png","abb4":"floorplans/abb4.png","abc2":"floorplans/abc2.png","abd3":"floorplans/abd3.png","abe1":"floorplans/abe1.png","abf1":"floorplans/abf1.png","abg1":"floorplans/abg1.png","abg2":"floorplans/abg2.png","abh0":"floorplans/abh0.png","abh1":"floorplans/abh1.png","abh2":"floorplans/abh2.png","abh3":"floorplans/abh3.png","abh4":"floorplans/abh4.png","abj1":"floorplans/abj1.png","abj2":"floorplans/abj2.png","abj3":"floorplans/abj3.png","abj4":"floorplans/abj4.png","abj5":"floorplans/abj5.png","abj6":"floorplans/abj6.png","abk0":"floorplans/abk0.png","abs1":"floorplans/abs1.png","abs2":"floorplans/abs2.png","abs3":"floorplans/abs3.png","abt1":"floorplans/abt1.png","cepa0":"floorplans/cepa0.png","cepa1":"floorplans/cepa1.png","cepa2":"floorplans/cepa2.png","cepa3":"floorplans/cepa3.png","ceph1":"floorplans/ceph1.png","cepq1":"floorplans/cepq1.png","cepr1":"floorplans/cepr1.png","ceps1":"floorplans/ceps1.png","ceps2":"floorplans/ceps2.png","cept1":"floorplans/cept1.png","cept2":"floorplans/cept2.png","cepv1":"floorplans/cepv1.png","cepw1":"floorplans/cepw1.png","outside-ab":"floorplans/outside-ab.png","outside-cep":"floorplans/outside-cep.png"}};
+(() => {
+"use strict";
+const CLASSROOM_TYPES=new Set(["CLASS","CLASS-SEMINAR","ECLASS","ECLASS-AGRI","ECLASS-ALC","ECLASS-CE","ECLASS-HYX","ECLASS-SEMINAR","ECLASS-TEP","ECLASS-UUNP"]);
+const LAB_TYPES=new Set(["LAB-B","LAB-C","LAB-C CE","LAB-C CIS","LAB-C ESL","LAB-CH","LAB-D","LAB-G","LAB-GD","LAB-K","LAB-M","LAB-N","LAB-P","LAB-PG","LAB-T","LAB-TH","LAB-V"]);
+const MEETING_TYPES=new Set(["MEET","EMEET"]);
+const ROOM_TYPE_LABELS={
+ "CLASS":"Classroom",
+ "CLASS-SEMINAR":"Seminar Classroom",
+ "ECLASS":"Classroom",
+ "ECLASS-AGRI":"AGRI Classroom",
+ "ECLASS-ALC":"Active Learning Classroom",
+ "ECLASS-CE":"Continuing Education Classroom",
+ "ECLASS-HYX":"Hyflex Classroom",
+ "ECLASS-SEMINAR":"Seminar Classroom",
+ "ECLASS-TEP":"TEP Classroom",
+ "ECLASS-UUNP":"UUNP Classroom",
+ "EMEET":"Meeting Room",
+ "HALL":"Hall Corridor",
+ "LAB-B":"Biology Lab",
+ "LAB-C":"Computer Lab",
+ "LAB-C CE":"CE Computer Lab",
+ "LAB-C CIS":"CIS Computer Lab",
+ "LAB-C ESL":"ESL Computer Lab",
+ "LAB-CH":"Chemistry Lab",
+ "LAB-D":"Dental Lab",
+ "LAB-G":"Geography Lab",
+ "LAB-GD":"Graphic Design",
+ "LAB-K":"Kinesiology Lab",
+ "LAB-M":"MOLA Lab",
+ "LAB-N":"Nursing Lab",
+ "LAB-P":"Physics Lab",
+ "LAB-PG":"Physics and Geography Priority Booking Lab (Lower Level-Dry Lab)",
+ "LAB-T":"Trades",
+ "LAB-TH":"THEA Lab/Classroom",
+ "LAB-V":"Visual Arts Lab",
+ "MEET":"Meeting Room",
+ "SPPR":"Specific Purpose Room",
+ "THEA":"Assembly & Auditorium"
+};
+const CAMPUSES={
+ AB:{name:"Abbotsford",locationPrefix:"AB",scheduleFile:"searchResByOccurrence-AB.json"},
+ CEP:{name:"Chilliwack",locationPrefix:"CEP",scheduleFile:"searchResByOccurrence-CEP.json"}
+};
+const ALL_CAMPUSES="ALL";
+function campusName(code){return CAMPUSES[String(code||"").toUpperCase()]?.name||String(code||"").toUpperCase()||"Unknown campus"}
+function activeCampus(){return $("#campusSelect")?.value||"AB"}
+function inferPlanCampus(id,p){
+ const explicit=String(p?.campus||"").trim().toUpperCase();
+ if(CAMPUSES[explicit])return explicit;
+ const building=String(p?.building||"").trim().toUpperCase();
+ if(building.startsWith("CEP"))return"CEP";
+ if(building.startsWith("AB"))return"AB";
+ const codes=Object.keys(p?.buildings||{}).map(x=>String(x).toUpperCase());
+ if(codes.some(x=>x.startsWith("CEP")))return"CEP";
+ const roomIds=Object.keys(p?.rooms||{}).map(x=>String(x).toUpperCase());
+ if(roomIds.some(x=>x.startsWith("CEP")))return"CEP";
+ if(String(id||"").toLowerCase().startsWith("cep"))return"CEP";
+ return"AB";
+}
+function buildingLabel(code){code=String(code||"").trim().toUpperCase();if(code==="OUTSIDE")return"Outside";if(code==="OTHER")return"Other";if(/^AB[A-Z]$/.test(code))return code.slice(2);if(/^CEP[A-Z]$/.test(code))return code.slice(3);return code}
+function buildingTargetLabel(code){code=String(code||"").trim().toUpperCase();if(code==="OUTSIDE")return"Outside";return code==="OTHER"?"Other":`Building ${buildingLabel(code)}`}
+function roomDisplayLabel(room){
+ if(!room)return"";
+ if(room.id==="ABY-YURT")return"ABY - YURT";
+ if(room.id==="ABS-INTG")return"INTG - Indigenous Teaching Garden";
+ return room.id.replace("-"," ");
+}
+function roomTypeLabel(room){
+ const type=String(room?.type||"").trim().toUpperCase();
+ return ROOM_TYPE_LABELS[type]||room?.description||type||"Room";
+}
+function normalizeRoomSearch(value){return String(value||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
+function roomFloorId(id){
+ return activePlans().map(([fid])=>fid).find(fid=>Object.prototype.hasOwnProperty.call(planRoomEntries(fid),id))||null;
+}
+function roomSearchAliases(room){
+ const shortBuilding=buildingLabel(room.building);
+ return [...new Set([
+   normalizeRoomSearch(roomDisplayLabel(room)),
+   normalizeRoomSearch(room.id),
+   normalizeRoomSearch(`${room.building}${room.room}`),
+   normalizeRoomSearch(`${shortBuilding}${room.room}`),
+   normalizeRoomSearch(room.room),
+   normalizeRoomSearch(roomDisplayLabel(room).replace(/\s*-\s*/g," "))
+ ].filter(Boolean))];
+}
+function roomSearchResults(){
+ const raw=$("#roomSearchInput")?.value||"",q=normalizeRoomSearch(raw);
+ if(!q)return[];
+ const candidates=allRooms.filter(room=>roomFloorId(room.id));
+ const numericOnly=/^\d+$/.test(q);
+ const ranked=candidates.map(room=>{
+   const aliases=roomSearchAliases(room);
+   let rank=99;
+   if(!numericOnly&&aliases.some(a=>a===q))rank=0;
+   else if(aliases.some(a=>a.startsWith(q)))rank=1;
+   else if(aliases.some(a=>a.includes(q)))rank=2;
+   return{room,rank};
+ }).filter(x=>x.rank<99);
+ const exact=ranked.filter(x=>x.rank===0);
+ const chosen=exact.length?exact:ranked;
+ return chosen.sort((a,b)=>a.rank-b.rank||roomDisplayLabel(a.room).localeCompare(roomDisplayLabel(b.room),undefined,{numeric:true,sensitivity:"base"})).map(x=>x.room);
+}
+function searchActive(){return normalizeRoomSearch($("#roomSearchInput")?.value||"").length>0}
+function updateRoomSearchClearButton(){
+ const btn=$("#clearRoomSearchBtn");
+ if(btn)btn.disabled=!searchActive();
+}
+function clearRoomSearch(){
+ const input=$("#roomSearchInput");
+ if(!input)return;
+ input.value="";
+ updateRoomSearchClearButton();
+ render();
+ input.focus();
+}
+function jumpToSearchRoom(id){
+ const room=roomById.get(id),fid=roomFloorId(id);
+ if(!room||!fid||!META[fid])return;
+ rememberLastNav();
+ $("#roomFilterSelect").value="all";
+ $("#vacantOnlyInput").checked=false;
+
+ selectedBuilding=null;
+ $("#campusSelect").value=room.campus;
+ fillBuildings();
+ $("#buildingSelect").value=META[fid].buildingCode;
+ fillFloors();
+ $("#floorSelect").value=fid;
+ syncNavState();
+ selected=id;
+ if(isMobileLayout()){
+   mobileRoomReturnView="list";
+   mobileRoomReturnScrollY=window.scrollY;
+   mobileView="room";
+   render();
+   window.scrollTo({top:0,behavior:"auto"});
+   return;
+ }
+ render();
+ requestAnimationFrame(()=>$("#detailsPanel").scrollIntoView({behavior:"smooth",block:"start"}));
+}
+function roomSearchRow(room,d){
+ const hasSchedule=scheduleAvailableForRoom(room.id);
+ if(!hasSchedule)return`<button type="button" class="room-list-button room-entry search-room-result" data-search-id="${esc(room.id)}"><span class="room-status-square unknown" aria-hidden="true"></span><span class="room-list-text"><span class="room-list-name">${esc(roomDisplayLabel(room))}</span><span class="room-list-until unknown">Schedule unavailable</span></span></button>`;
+ const s=selectedState(room.id,d),kind=stateKind(s),status=roomListStatus(room.id,d);
+ return`<button type="button" class="room-list-button room-entry search-room-result" data-search-id="${esc(room.id)}"><span class="room-status-square ${kind}" aria-hidden="true"></span><span class="room-list-text"><span class="room-list-name">${esc(roomDisplayLabel(room))}</span><span class="room-list-until ${status.kind}">${esc(status.text)}</span></span></button>`;
+}
+function renderSearchResults(){
+ const d=curDate(),rs=roomSearchResults();
+ renderRoomSummary(rs,d,false);
+ $("#roomList").innerHTML=rs.length?rs.map(room=>roomSearchRow(room,d)).join(""):`<div class="search-empty">No matching rooms</div>`;
+ $("#roomList").querySelectorAll("[data-search-id]").forEach(b=>b.addEventListener("click",()=>jumpToSearchRoom(b.dataset.searchId)));
+}
+const OVERLAY_ROOT=[2,3,4].includes(DATA.overlays?.version)&&DATA.overlays?.plans?DATA.overlays.plans:{};
+const OTHER_OVERLAY_PLAN=Object.entries(OVERLAY_ROOT).find(([,p])=>String(p?.building||"").trim().toUpperCase()==="OTHER")?.[1]||null;
+function virtualOtherIds(){return Array.isArray(OTHER_OVERLAY_PLAN?.virtualRooms)&&OTHER_OVERLAY_PLAN.virtualRooms.length?OTHER_OVERLAY_PLAN.virtualRooms:["ABY-YURT","ABS-INTG"]}
+const META=Object.fromEntries(Object.entries(OVERLAY_ROOT).map(([id,p])=>[id,{campusCode:inferPlanCampus(id,p),buildingCode:String(p?.building||"").trim().toUpperCase(),building:String(p?.buildingLabel||buildingLabel(p?.building)||id).trim(),floor:String(p?.floor||id),image:String(p?.image||`${id}.png`)}]));
+const $=s=>document.querySelector(s);let allRooms=[],classrooms=[],roomById=new Map(),scheduleByRoom=new Map(),scheduleOccurrences=[],scheduleDates=[],scheduleLoaded=false,scheduleRange=null,scheduleCampusState=new Map(Object.keys(CAMPUSES).map(k=>[k,{available:false,stale:false}])),selected=null,selectedBuilding=null,navHistory=[],lastNavState=null;
+let mapZoom=1,mapPanX=0,mapPanY=0,mapNaturalWidth=0,mapNaturalHeight=0,mapFitScale=1,mapPointers=new Map(),mapDragStart=null,mapPinchStart=null,mapDidDrag=false,mapSuppressClickUntil=0,mapFullscreen=false,mapFullscreenReturnScrollY=0,mapFullscreenOpener=null;
+const mobileMedia=window.matchMedia("(max-width:700px)");
+let mobileView="list",mobileOptionsReturnView="list",mobileRoomReturnView="list",mobileRoomReturnScrollY=0,mobileOptionsReturnScrollY=0;
+const plans=DATA.plans||{};
+const livePlans={...plans};
+let localPlanObjectUrls=[];
+function planSourceFileName(source,fallback=""){
+ let raw=String(source||"").split(/[?#]/)[0].replace(/\\/g,"/"),name=raw.slice(raw.lastIndexOf("/")+1)||String(fallback||"");
+ try{name=decodeURIComponent(name)}catch{}
+ return name||String(fallback||"");
+}
+function localPlanExpected(){
+ return Object.keys(META).map(fid=>({fid,name:planSourceFileName(livePlans[fid],META[fid]?.image||`${fid}.png`)})).filter(x=>x.name);
+}
+function updateLocalPlanStatus(loadedNames=null){
+ const el=$("#localPlanStatus");if(!el)return;
+ const expected=localPlanExpected(),loaded=loadedNames||new Set();
+ if(!loadedNames){el.textContent=`For local testing, choose all ${expected.length} campus/floor-plan PNGs used by this index.html.`;return}
+ const missing=expected.filter(x=>!loaded.has(x.name.toLowerCase())).map(x=>x.name);
+ el.textContent=missing.length
+   ?`${expected.length-missing.length} / ${expected.length} plan PNGs loaded. Missing: ${missing.slice(0,6).join(", ")}${missing.length>6?"…":""}`
+   :`All ${expected.length} campus/floor-plan PNGs loaded for this local session.`;
+}
+function loadLocalPlanFiles(){
+ for(const url of localPlanObjectUrls)URL.revokeObjectURL(url);
+ localPlanObjectUrls=[];
+ const files=[...($("#localPlanFiles")?.files||[])],byName=new Map(files.map(file=>[file.name.toLowerCase(),file])),loadedNames=new Set();
+ for(const {fid,name} of localPlanExpected()){
+   plans[fid]=livePlans[fid];
+   const file=byName.get(name.toLowerCase());
+   if(!file)continue;
+   const url=URL.createObjectURL(file);
+   localPlanObjectUrls.push(url);plans[fid]=url;loadedNames.add(name.toLowerCase());
+ }
+ updateLocalPlanStatus(loadedNames);
+ resetMapView();
+ render();
+}
+function planRoomEntries(fid){return OVERLAY_ROOT[fid]?.rooms||{}}
+function planBuildingEntries(fid){return OVERLAY_ROOT[fid]?.buildings||{}}
+function overlayPoints(entry){return Array.isArray(entry)?entry:(Array.isArray(entry?.points)?entry.points:[])}
+let scheduleSource="none";
+const SCHEDULE_TIME_ZONE="America/Vancouver";
+const SEARCH_HEADERS=["Event","Activity","Start Date","End Date","Day","Time","Location","Reservation ID","Note"];
+function vancouverNowParts(date=new Date()){
+ const parts=new Intl.DateTimeFormat("en-CA",{timeZone:SCHEDULE_TIME_ZONE,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(date);
+ const get=t=>Number(parts.find(p=>p.type===t)?.value||0);
+ return{year:get("year"),month:get("month"),day:get("day"),hour:get("hour"),minute:get("minute")};
+}
+function localTodayISO(){const p=vancouverNowParts();return`${p.year}-${String(p.month).padStart(2,"0")}-${String(p.day).padStart(2,"0")}`}
+function currentBlockEndISO(startISO=localTodayISO()){
+ const [year,month]=String(startISO).split("-").map(Number),endMonth=month<=4?4:month<=8?8:12,endDay=endMonth===4?30:31;
+ return`${year}-${String(endMonth).padStart(2,"0")}-${String(endDay).padStart(2,"0")}`;
+}
+function calendarDateRange(startISO,endISO){if(!startISO||!endISO||startISO>endISO)return[];const start=parseDate(startISO),end=parseDate(endISO),out=[];for(let d=start;d<=end;d=addDays(d,1))out.push(formatISO(d));return out}
+function validSearchResponse(raw){const r=raw?.response;if(raw?.success!==true||!r||!Array.isArray(r.headers)||!Array.isArray(r.data)||r.headers.length<10)return false;return SEARCH_HEADERS.every((name,i)=>String(r.headers[i+1]||"").trim()===name)}
+function timestampDateISO(seconds){const n=Number(seconds);if(!Number.isFinite(n))return null;try{return new Date(n*1000).toISOString().slice(0,10)}catch{return null}}
+function parseClockMinutes(hour,minute,ampm){let h=Number(hour),m=Number(minute);if(!Number.isInteger(h)||h<1||h>12||!Number.isInteger(m)||m<0||m>59)return null;const ap=String(ampm||"").toUpperCase();if(ap==="AM"){if(h===12)h=0}else if(ap==="PM"){if(h!==12)h+=12}else return null;return h*60+m}
+function parseTimeRange(value){const m=String(value||"").match(/^\s*(\d{1,2}):(\d{2})\s*(AM|PM)\s*[-–—]\s*(\d{1,2}):(\d{2})\s*(AM|PM)\s*$/i);if(!m)return null;const start=parseClockMinutes(m[1],m[2],m[3]),endRaw=parseClockMinutes(m[4],m[5],m[6]);if(start==null||endRaw==null)return null;return{start,end:endRaw<start?endRaw+1440:endRaw}}
+function cleanScheduleText(value){return String(value??"").replace(/\s+/g," ").trim()}
+function normalizedEventTitle(event,activity,note){
+ const ev=cleanScheduleText(event),act=cleanScheduleText(activity),nt=cleanScheduleText(note),academic=act.match(/^\d{6}-\d+-([A-Z0-9#]+)$/i);
+ if(academic){const tail=cleanScheduleText(ev.split("-").at(-1)||ev).replace(/\s+/g,"");const base=`${tail||ev}${academic[1]?` ${academic[1]}`:""}`.trim()||"Scheduled booking";if(nt&&!/^(lecture|lab|lecture\/lab|internet online)$/i.test(nt))return`${base}: ${nt}`;return base}
+ if(ev&&act&&act.toUpperCase()!==ev.toUpperCase())return`${ev}: ${act}`;return ev||act||nt||"Scheduled booking";
+}
+function parseSearchResponse(raw,campusKey){
+ if(!validSearchResponse(raw))throw new Error("This is not the expected searchResByOccurrence JSON format.");
+ const campus=String(campusKey||"").toUpperCase(),occurrences=[],warnings=[],seen=new Set();let minDate=null,maxDate=null;
+ raw.response.data.forEach((row,rowIndex)=>{
+   if(!row||!Array.isArray(row.date)||!Array.isArray(row.listContent)||row.listContent.length<9){warnings.push(`Skipped malformed reservation row ${rowIndex+1}.`);return}
+   const[event,activity,startDate,endDate,day,time,location,reservationId,note]=row.listContent,range=parseTimeRange(time);
+   if(!range){warnings.push(`Skipped reservation row ${rowIndex+1} because its time range could not be parsed.`);return}
+   const guid=cleanScheduleText(row.resId);
+   for(const timestamp of row.date){
+     const date=timestampDateISO(timestamp);if(!date){warnings.push(`Skipped an invalid occurrence timestamp in reservation row ${rowIndex+1}.`);continue}
+     const key=[campus,guid,String(timestamp),String(range.start),cleanScheduleText(location)].join("\u0000");if(seen.has(key))continue;seen.add(key);
+     minDate=minDate==null||date<minDate?date:minDate;maxDate=maxDate==null||date>maxDate?date:maxDate;
+     occurrences.push({date,timestamp:Number(timestamp),campus,campusName:campusName(campus),guid,event:cleanScheduleText(event),activity:cleanScheduleText(activity),sourceStartDate:cleanScheduleText(startDate),sourceEndDate:cleanScheduleText(endDate),sourceDay:cleanScheduleText(day),time:cleanScheduleText(time),location:cleanScheduleText(location),reservationId:cleanScheduleText(reservationId),note:cleanScheduleText(note),start:range.start,end:range.end,title:normalizedEventTitle(event,activity,note)});
+   }
+ });
+ occurrences.sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start||a.end-b.end||a.guid.localeCompare(b.guid));
+ return{occurrences,minDate,maxDate,warnings,cache:raw?.cache||null};
+}
+function inferLocalScheduleCampus(raw){
+ const found=new Set();
+ for(const row of raw?.response?.data||[]){const loc=String(row?.listContent?.[6]||"").trim().toUpperCase();if(loc.startsWith("CEP "))found.add("CEP");else if(loc.startsWith("AB "))found.add("AB")}
+ return found.size===1?[...found][0]:"UNKNOWN";
+}
+function resetCampusScheduleState(){scheduleCampusState=new Map(Object.keys(CAMPUSES).map(k=>[k,{available:false,stale:false}]))}
+function clearSchedule(){scheduleOccurrences=[];scheduleDates=[];scheduleByRoom=new Map();scheduleLoaded=false;scheduleRange=null;scheduleSource="none";resetCampusScheduleState()}
+function scheduleAvailableForCampus(campus){return!!scheduleCampusState.get(String(campus||"").toUpperCase())?.available}
+function scheduleAvailableForRoom(id){const room=roomById.get(id);return!!room&&scheduleAvailableForCampus(room.campus)}
+function hasScheduleData(){return scheduleLoaded&&scheduleDates.length>0&&[...scheduleCampusState.values()].some(x=>x.available)}
+function formatLastUpdatedDate(iso){
+ const value=String(iso||"").trim();
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return"";
+ return new Intl.DateTimeFormat(undefined,{month:"long",day:"numeric",year:"numeric",timeZone:"UTC"}).format(parseDate(value));
+}
+function updateLastUpdatedLabel(){
+ const el=$("#lastUpdated");if(!el)return;
+ const dates=[...scheduleCampusState.values()]
+   .filter(state=>state?.available)
+   .map(state=>String(state?.cache?.refreshedLocalDate||"").trim())
+   .filter(value=>/^\d{4}-\d{2}-\d{2}$/.test(value))
+   .sort();
+ el.textContent=dates.length?`Last updated: ${formatLastUpdatedDate(dates[0])}`:"Last updated: unavailable";
+}
+async function loadAutomaticSchedule(){
+ if(!/^https?:$/.test(location.protocol))return;
+ clearSchedule();const today=localTodayISO(),endDate=currentBlockEndISO(today),loaded=[];
+ await Promise.all(Object.entries(CAMPUSES).map(async([campus,cfg])=>{
+   try{
+     const response=await fetch(`${cfg.scheduleFile}?v=${Date.now()}`,{cache:"no-store"});if(!response.ok)throw new Error(`HTTP ${response.status}`);
+     const raw=await response.json(),parsed=parseSearchResponse(raw,campus),cache=parsed.cache;
+     if(cache?.endDate&&String(cache.endDate)<today)throw new Error("cached date block has expired");
+     const stale=!!cache?.refreshedLocalDate&&cache.refreshedLocalDate!==today;
+     if(stale)console.warn(`${cfg.name} UFV schedule may be stale. Last successful refresh: ${cache.refreshedLocalDate}.`);
+     scheduleCampusState.set(campus,{available:true,stale,cache});scheduleOccurrences.push(...parsed.occurrences);loaded.push(campus);
+     if(parsed.warnings.length)console.warn(`${cfg.name} occurrence parser warnings:`,parsed.warnings);
+   }catch(err){scheduleCampusState.set(campus,{available:false,stale:false,error:String(err)});console.warn(`${cfg.name} UFV schedule could not be loaded.`,err)}
+ }));
+ if(loaded.length){scheduleLoaded=true;scheduleSource="automatic";scheduleRange={startDate:today,endDate}}
+}
+function updateScheduleControls(){
+ const anySchedule=hasScheduleData(),campusHasSchedule=scheduleAvailableForCampus(activeCampus());
+ $("#daySelect").disabled=!anySchedule;
+ $("#timeInput").disabled=!anySchedule;
+ $("#endTimeInput").disabled=!anySchedule;
+ $("#nowBtn").disabled=!anySchedule;
+ $("#noEndBtn").disabled=!anySchedule;
+ $("#vacantOnlyInput").disabled=!campusHasSchedule;
+ if(!campusHasSchedule)$("#vacantOnlyInput").checked=false;
+ updateDayNavButtons();
+}
+async function loadLocalTestSchedules(){
+ const selected=[
+   {campus:"AB",file:$("#localScheduleFileAB")?.files?.[0]},
+   {campus:"CEP",file:$("#localScheduleFileCEP")?.files?.[0]}
+ ].filter(x=>x.file);
+ if(!selected.length)return;
+
+ clearSchedule();
+ let minDate=null,maxDate=null,loaded=0;
+
+ for(const item of selected){
+   try{
+     const raw=JSON.parse(await item.file.text()),parsed=parseSearchResponse(raw,item.campus);
+     scheduleOccurrences.push(...parsed.occurrences);
+     scheduleCampusState.set(item.campus,{available:true,stale:false,cache:parsed.cache});
+     minDate=parsed.minDate&&(minDate==null||parsed.minDate<minDate)?parsed.minDate:minDate;
+     maxDate=parsed.maxDate&&(maxDate==null||parsed.maxDate>maxDate)?parsed.maxDate:maxDate;
+     loaded++;
+     if(parsed.warnings.length)console.warn(`${CAMPUSES[item.campus].name} occurrence parser warnings:`,parsed.warnings);
+   }catch(err){
+     scheduleCampusState.set(item.campus,{available:false,stale:false,error:String(err)});
+     console.error(`Could not load ${CAMPUSES[item.campus].name} local schedule JSON.`,err);
+   }
+ }
+
+ scheduleLoaded=loaded>0;
+ scheduleSource=scheduleLoaded?"local-test":"none";
+ scheduleRange=scheduleLoaded
+   ?{startDate:minDate||localTodayISO(),endDate:maxDate||currentBlockEndISO()}
+   :null;
+
+ if(scheduleLoaded&&!scheduleAvailableForCampus(activeCampus())){
+   const firstAvailable=[...scheduleCampusState.entries()].find(([,state])=>state.available)?.[0];
+   if(firstAvailable)$("#campusSelect").value=firstAvailable;
+ }
+
+ buildSchedule();
+ fillBuildings();
+ fillFloors();
+ syncNavState();
+ fillDays();
+ selected=null;
+ selectedBuilding=null;
+ updateLastUpdatedLabel();
+ updateScheduleControls();
+ render();
+}
+function esc(v){return String(v??"").replace(/[&<>\"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'\"':"&quot;","'":"&#39;"}[ch]))}
+function normOne(raw,expectedCampus=""){
+ const r=raw?.response;if(!r||!Array.isArray(r.headers)||!Array.isArray(r.data))throw new Error("Invalid room data");
+ const expected=String(expectedCampus||"").toUpperCase();
+ return r.data.map(item=>{const x=Object.fromEntries(r.headers.map((h,i)=>[h,item.listData?.[i]??""]));const b=String(x["Building"]||"").trim().toUpperCase(),n=String(x["Room"]||"").trim().toUpperCase(),t=String(x["Room Type"]||"").trim().toUpperCase();return{id:`${b}-${n}`,campus:String(x["Campus"]||"").trim().toUpperCase(),building:b,room:n,type:t,capacity:x["Capacity"]||"",description:x["Description"]||"",note:x["Room Note"]||"",isClassroom:CLASSROOM_TYPES.has(t),isLab:LAB_TYPES.has(t),isMeeting:MEETING_TYPES.has(t)}}).filter(x=>!expected||x.campus===expected)
+}
+function norm(raw){
+ const out=[];
+ if(raw?.response)out.push(...normOne(raw));
+ else for(const[campus,source]of Object.entries(raw||{}))if(source)out.push(...normOne(source,campus));
+ const byId=new Map();for(const room of out)byId.set(room.id,room);return[...byId.values()];
+}
+function token(r){const prefix=CAMPUSES[r.campus]?.locationPrefix||r.campus;return`${prefix} ${r.building} ${r.room}`.toUpperCase()}
+function roomsInLocation(location,campus){
+ const u=String(location||"").toUpperCase(),used=[],found=[],campusKey=String(campus||"").toUpperCase(),list=allRooms.filter(r=>r.campus===campusKey).map(r=>({id:r.id,t:token(r)})).sort((a,b)=>b.t.length-a.t.length);
+ for(const x of list){let from=0;while(from<u.length){const s=u.indexOf(x.t,from);if(s<0)break;const e=s+x.t.length;if(!used.some(([a,b])=>s<b&&e>a)){used.push([s,e]);found.push(x.id);break}from=s+1}}
+ return[...new Set(found)];
+}
+function buildSchedule(){
+ scheduleByRoom=new Map();scheduleDates=[];if(!scheduleLoaded||!scheduleRange)return;scheduleDates=calendarDateRange(scheduleRange.startDate,scheduleRange.endDate);
+ for(const occurrence of scheduleOccurrences){if(occurrence.date<scheduleRange.startDate||occurrence.date>scheduleRange.endDate)continue;const ids=roomsInLocation(occurrence.location,occurrence.campus);for(const id of ids){if(!roomById.has(id))continue;if(!scheduleByRoom.has(id))scheduleByRoom.set(id,[]);scheduleByRoom.get(id).push({date:occurrence.date,start:occurrence.start,end:occurrence.end,title:occurrence.title,guid:occurrence.guid,campus:occurrence.campus,event:occurrence.event,activity:occurrence.activity,location:occurrence.location,reservationId:occurrence.reservationId,note:occurrence.note})}}
+ for(const a of scheduleByRoom.values())a.sort((x,y)=>x.date.localeCompare(y.date)||x.start-y.start||x.end-y.end||x.guid.localeCompare(y.guid));
+}
+function parseDate(s){const[y,m,d]=s.split("-").map(Number);return new Date(Date.UTC(y,m-1,d))}function formatISO(d){return d.toISOString().slice(0,10)}function addDays(d,n){const x=new Date(d);x.setUTCDate(x.getUTCDate()+n);return x}function fmtDate(s,long=false){const opts=long?{weekday:"long",month:"short",day:"numeric",year:"numeric",timeZone:"UTC"}:{weekday:"short",month:"short",day:"numeric",year:"numeric",timeZone:"UTC"};return new Intl.DateTimeFormat(undefined,opts).format(parseDate(s))}function mins(v){const[h,m]=String(v||"00:00").split(":").map(Number);return h*60+m}function fmtMin(n){n=Math.max(0,Math.min(1440,Number(n)));let h=Math.floor(n/60),m=n%60;const period=h>=12?"PM":"AM";h=h%12||12;return`${h}:${String(m).padStart(2,"0")} ${period}`}
+
+const BUILDING_HOURS={
+ AB:{
+  A:{weekday:[420,1320],saturday:[480,1080],sunday:null},B:{weekday:[420,1320],saturday:[480,1080],sunday:null},C:{weekday:[420,1320],saturday:[480,1080],sunday:null},D:{weekday:[420,1320],saturday:[480,1080],sunday:null},
+  E:{weekday:[420,1320],saturday:[480,900],sunday:[480,1200]},F:{closed:true,note:"Card access for staff"},G:{weekday:[420,1320],saturday:[480,1140],sunday:[690,1140]},J:{weekday:[480,1320],saturday:null,sunday:[960,1320]},K:{weekday:[420,1320],saturday:[480,1080],sunday:null},S:{weekday:[390,1320],saturday:[420,1320],sunday:[420,1320]}
+ },
+ CEP:{
+  A:{weekday:[420,1320],saturday:[480,1140],sunday:null},
+  H:{closed:true,note:"Card access for staff and authorized students"},
+  Q:{closed:true,note:"Card access for staff and authorized students"},
+  R:{closed:true,note:"Card access for staff and authorized students"},
+  S:{byDay:{0:null,1:[360,960],2:[360,960],3:[360,960],4:[360,960],5:null,6:null}},
+  T:{weekday:[420,1380],saturday:null,sunday:null},
+  V:{weekday:[420,1320],saturday:null,sunday:null},
+  W:{closed:true,note:"Card access for staff"}
+ }
+};
+function buildingForRoom(id){const room=roomById.get(id);if(id==="ABS-INTG"||id==="ABY-YURT")return{campus:"AB",building:"OUTDOOR"};return{campus:room?.campus||"",building:buildingLabel(room?.building||"")}}
+function hoursInfoForBuilding(campus,building,d){
+ const campusKey=String(campus||"").toUpperCase(),key=String(building||"").trim().toUpperCase(),cfg=BUILDING_HOURS[campusKey]?.[key],dow=parseDate(d).getUTCDay();
+ if(!cfg)return{status:"unknown",hours:null,note:"Hours unknown"};
+ if(cfg.closed)return{status:"closed",hours:null,note:cfg.note||""};
+ if(cfg.byDay&&Object.prototype.hasOwnProperty.call(cfg.byDay,dow)){
+   const direct=cfg.byDay[dow];
+   if(!direct)return{status:"closed",hours:null,note:cfg.note||""};
+   return{status:"open",hours:direct,note:cfg.note||""};
+ }
+ const h=dow===0?cfg.sunday:dow===6?cfg.saturday:cfg.weekday;
+ if(!h)return{status:"closed",hours:null,note:cfg.note||""};
+ return{status:"open",hours:h,note:cfg.note||""};
+}
+function hoursForRoom(id,d){const x=buildingForRoom(id);return hoursInfoForBuilding(x.campus,x.building,d)}
+const TURNAROUND=10;
+function eventsFor(id,d){return(scheduleByRoom.get(id)||[]).filter(e=>e.date===d)}
+function bookingBlocks(id,d){
+ const ev=eventsFor(id,d).slice().sort((a,b)=>a.start-b.start||a.end-b.end);
+ const blocks=[];
+ for(const e of ev){
+   const last=blocks.at(-1);
+   if(!last||e.start>last.end+TURNAROUND){
+     blocks.push({start:e.start,end:e.end,events:[e]});
+   }else{
+     last.end=Math.max(last.end,e.end);
+     last.events.push(e);
+   }
+ }
+ return blocks;
+}
+function stateAt(id,d,m){
+ if(!scheduleAvailableForRoom(id))return{unknown:true,unavailable:true,closed:false,occupied:false,events:[],blocks:[]};
+ const info=hoursForRoom(id,d);
+ const hitBlocks=bookingBlocks(id,d).filter(b=>b.start<=m&&m<b.end);
+ const hits=hitBlocks.flatMap(b=>b.events);
+ if(hitBlocks.length)return{unknown:false,closed:false,occupied:true,events:hits,blocks:hitBlocks};
+ if(info.status==="unknown")return{unknown:true,closed:false,occupied:false,events:[],blocks:[]};
+ if(info.status==="closed")return{unknown:false,closed:true,occupied:false,events:[],blocks:[]};
+ const h=info.hours;
+ if(m<h[0]||m>=h[1])return{unknown:false,closed:true,occupied:false,events:[],blocks:[]};
+ return{unknown:false,closed:false,occupied:false,events:[],blocks:[]};
+}
+function selectedState(id,d){
+ if(!scheduleAvailableForRoom(id))return{unknown:true,unavailable:true,closed:false,occupied:false,events:[],blocks:[]};
+ const start=curMin(),end=endMin(),info=hoursForRoom(id,d);
+ if(end===null)return stateAt(id,d,start);
+ const hitBlocks=bookingBlocks(id,d).filter(b=>b.start<end&&b.end>start);
+ const hits=hitBlocks.flatMap(b=>b.events);
+ if(hitBlocks.length)return{unknown:false,closed:false,occupied:true,events:hits,blocks:hitBlocks};
+ if(info.status==="unknown")return{unknown:true,closed:false,occupied:false,events:[],blocks:[]};
+ if(info.status==="closed")return{unknown:false,closed:true,occupied:false,events:[],blocks:[]};
+ const h=info.hours;
+ if(start<h[0]||start>=h[1]||end<=start||end>h[1])return{unknown:false,closed:true,occupied:false,events:[],blocks:[]};
+ return{unknown:false,closed:false,occupied:false,events:[],blocks:[]};
+}
+function stateKind(s){return s.occupied?"busy":s.unknown?"unknown":s.closed?"closed":"free"}
+function stateLabel(s){return s.occupied?"Booked":s.unavailable?"Schedule unavailable":s.unknown?"Hours unknown":s.closed?"Closed":"Vacant"}
+function weekdayName(d){return new Intl.DateTimeFormat(undefined,{weekday:"long",timeZone:"UTC"}).format(parseDate(d))}
+function nextOpeningForRoom(id,d,m){
+ for(let offset=0;offset<=7;offset++){
+   const date=formatISO(addDays(parseDate(d),offset)),info=hoursForRoom(id,date);
+   if(info.status!=="open")continue;
+   const open=info.hours[0];
+   if(offset===0){
+     if(m<open)return{date,minute:open,offset};
+     continue;
+   }
+   return{date,minute:open,offset};
+ }
+ return null;
+}
+function bookedUntil(id,d,start,selected){
+ const blocks=bookingBlocks(id,d);
+ let block=null;
+ if(selected?.blocks?.length){
+   block=selected.blocks.find(b=>b.start<=start&&start<b.end)||selected.blocks[0];
+ }
+ if(!block)block=blocks.find(b=>b.start<=start&&start<b.end);
+ if(!block)return null;
+ let end=block.end;
+ const info=hoursForRoom(id,d);
+ if(info.status==="open")end=Math.min(end,info.hours[1]);
+ return end;
+}
+function roomListStatus(id,d){
+ if(!scheduleAvailableForRoom(id))return{kind:"unknown",text:"Schedule unavailable"};
+ const m=curMin(),selected=selectedState(id,d),point=stateAt(id,d,m),info=hoursForRoom(id,d);
+ if(selected.occupied){
+   const until=bookedUntil(id,d,m,selected);
+   return{kind:"busy",text:until===null?"Booked":`Booked until ${fmtMin(until)}`};
+ }
+ if(selected.unknown)return{kind:"unknown",text:"Hours unknown"};
+ if(selected.closed){
+   if(info.status==="open"&&!point.closed&&info.hours&&endMin()!==null&&endMin()>info.hours[1])
+     return{kind:"closed",text:`Closed after ${fmtMin(info.hours[1])}`};
+   const next=nextOpeningForRoom(id,d,m);
+   if(!next)return{kind:"closed",text:info.note?`Closed. ${info.note}`:"Closed"};
+   return{kind:"closed",text:`Closed until ${next.offset?`${weekdayName(next.date)} `:""}${fmtMin(next.minute)}`};
+ }
+ const close=info.hours?.[1];
+ const next=bookingBlocks(id,d).find(b=>b.start>m&&(close==null||b.start<close));
+ const until=next?next.start:close;
+ return{kind:"free",text:until==null?"Vacant":`Vacant until ${fmtMin(until)}`};
+}
+function transition(id,d,m){
+ const status=roomListStatus(id,d);
+ return status.text;
+}
+function daySegments(id,d){
+ if(!scheduleAvailableForRoom(id))return[{kind:"unknown",title:"Schedule unavailable"}];
+ const info=hoursForRoom(id,d);
+ const allEvents=eventsFor(id,d).slice().sort((a,b)=>a.start-b.start||a.end-b.end);
+ if(info.status==="unknown"){
+   if(!allEvents.length)return[{kind:"unknown",title:"Hours unknown"}];
+   return[
+     {kind:"unknown",title:"Hours unknown"},
+     ...allEvents.map(e=>({kind:"busy",start:e.start,end:e.end,title:e.title}))
+   ];
+ }
+ if(info.status==="closed"){
+   if(!allEvents.length)return[{kind:"closed",title:info.note?`Closed. ${info.note}`:"Closed for the day"}];
+   return[
+     {kind:"closed",title:info.note?`Closed outside scheduled bookings. ${info.note}`:"Closed outside scheduled bookings"},
+     ...allEvents.map(e=>({kind:"busy",start:e.start,end:e.end,title:e.title}))
+   ];
+ }
+ const[open,close]=info.hours;
+ const ev=allEvents.filter(e=>e.end>open&&e.start<close);
+ if(!ev.length)return[{kind:"free",start:open,end:close,title:"No bookings scheduled"}];
+ const out=[];let cursor=open,hasPreviousBooking=false;
+ for(const e of ev){
+   const start=Math.max(open,e.start),end=Math.min(close,e.end);
+   const gap=start-cursor;
+   const minimumUsefulGap=hasPreviousBooking?TURNAROUND:0;
+   if(gap>minimumUsefulGap)out.push({kind:"free",start:cursor,end:start,title:"No bookings scheduled"});
+   out.push({kind:"busy",start,end,title:e.title});
+   cursor=Math.max(cursor,end);
+   hasPreviousBooking=true;
+ }
+ if(close-cursor>TURNAROUND)out.push({kind:"free",start:cursor,end:close,title:"No bookings scheduled"});
+ return out;
+}
+function currentRoomFilter(){return $("#roomFilterSelect")?.value||"all"}
+function vacantOnlyEnabled(){return!!$("#vacantOnlyInput")?.checked}
+function roomMatchesFilter(room,mode=currentRoomFilter()){
+ if(mode==="classrooms")return room.isClassroom;
+ if(mode==="labs")return room.isLab;
+ if(mode==="meetings")return room.isMeeting;
+ return true;
+}
+function roomPassesVacantOnly(room,d=curDate()){
+ if(!vacantOnlyEnabled())return true;
+ if(!room||!d)return true;
+ if(!scheduleAvailableForRoom(room.id))return false;
+ const s=selectedState(room.id,d);
+ return!s.occupied&&!s.closed&&!s.unknown;
+}
+function floorRooms(fid,mode=currentRoomFilter()){
+ const ids=new Set(Object.keys(planRoomEntries(fid))),outside=META[fid]?.buildingCode==="OUTSIDE";
+ const priority=id=>id==="ABY-YURT"?0:id==="ABS-INTG"?1:2;
+ return allRooms.filter(r=>{
+   if(!ids.has(r.id))return false;
+   const outdoor=outside&&(r.id==="ABY-YURT"||r.id==="ABS-INTG");
+   if(!outdoor&&!roomMatchesFilter(r,mode))return false;
+   if(outdoor)return true;
+   return roomPassesVacantOnly(r);
+ }).sort((a,b)=>{
+   const pa=priority(a.id),pb=priority(b.id);
+   if(pa!==pb)return pa-pb;
+   return a.room.localeCompare(b.room,undefined,{numeric:true});
+ });
+}function curFloor(){return $("#floorSelect").value}function curDate(){const input=$("#daySelect"),v=input.value;if(!v)return"";if(input.min&&v<input.min)return input.min;if(input.max&&v>input.max)return input.max;return v}function curMin(){return mins($("#timeInput").value)}function endMin(){const v=$("#endTimeInput").value;return v?mins(v):null}
+function activePlans(){const campus=activeCampus();return Object.entries(META).filter(([id,m])=>plans[id]&&(campus===ALL_CAMPUSES||m.campusCode===campus))}
+function isAllCampuses(){return activeCampus()===ALL_CAMPUSES}
+const ALL_FLOORS_ID="__ALL_FLOORS__",OTHER_FLOOR_ID="__OTHER__";
+function buildingPlans(code=$("#buildingSelect").value){
+ const key=String(code||"").trim().toUpperCase();
+ return activePlans().filter(([,m])=>m.buildingCode===key).sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true,sensitivity:"base"}));
+}
+function isAllFloors(){return curFloor()===ALL_FLOORS_ID}
+function chooseFloorGridColumns(count){
+ if(count<=2)return 2;
+ if(count===3)return 3;
+ if(count===4)return 2;
+ return 3;
+}
+function buildingLinksForFloor(fid){
+ return Object.entries(planBuildingEntries(fid)).map(([code,e])=>{
+   code=String(code).toUpperCase();
+   return{code,label:String(e?.label||buildingTargetLabel(code)),points:overlayPoints(e)};
+ }).filter(x=>x.code!=="OTHER"&&x.points.length>=3).sort((a,b)=>a.label.localeCompare(b.label,undefined,{numeric:true}));
+}
+function uniqueRoomsFromPlanIds(planIds,mode=currentRoomFilter()){
+ const ids=new Set();
+ for(const fid of planIds)for(const id of Object.keys(planRoomEntries(fid)))ids.add(id);
+ const priority=id=>id==="ABY-YURT"?0:id==="ABS-INTG"?1:2;
+ return allRooms.filter(r=>ids.has(r.id)&&roomMatchesFilter(r,mode)&&roomPassesVacantOnly(r)).sort((a,b)=>{
+   const pa=priority(a.id),pb=priority(b.id);
+   if(pa!==pb)return pa-pb;
+   return roomDisplayLabel(a).localeCompare(roomDisplayLabel(b),undefined,{numeric:true,sensitivity:"base"});
+ });
+}
+function otherRooms(mode=currentRoomFilter()){
+ if(mode!=="all")return[];
+ return virtualOtherIds().map(id=>roomById.get(id)).filter(Boolean).filter(room=>roomPassesVacantOnly(room));
+}
+function campusRooms(mode=currentRoomFilter()){
+ const base=uniqueRoomsFromPlanIds(activePlans().map(([id])=>id),mode),seen=new Set(base.map(r=>r.id));
+ for(const id of ["ABY-YURT","ABS-INTG"]){
+   const room=roomById.get(id);
+   if(room&&!seen.has(id)&&activePlans().some(([fid])=>Object.prototype.hasOwnProperty.call(planRoomEntries(fid),id))){
+     base.push(room);seen.add(id);
+   }
+ }
+ const priority=id=>id==="ABY-YURT"?0:id==="ABS-INTG"?1:2;
+ return base.sort((a,b)=>{
+   if(isAllCampuses()&&a.campus!==b.campus)return campusName(a.campus).localeCompare(campusName(b.campus));
+   const pa=priority(a.id),pb=priority(b.id);if(pa!==pb)return pa-pb;
+   return roomDisplayLabel(a).localeCompare(roomDisplayLabel(b),undefined,{numeric:true,sensitivity:"base"});
+ });
+}
+function buildingRooms(code,mode=currentRoomFilter()){
+ const key=String(code||"").trim().toUpperCase();
+ if(key==="OTHER")return otherRooms(mode);
+ return uniqueRoomsFromPlanIds(activePlans().filter(([,m])=>m.buildingCode===key).map(([id])=>id),mode);
+}
+function summaryRoomsForFloor(fid){
+ if(fid===ALL_FLOORS_ID)return buildingRooms($("#buildingSelect").value);
+ return META[fid]?.buildingCode==="OUTSIDE"?campusRooms():floorRooms(fid);
+}
+function countRoomStates(rs,d){
+ const counts={free:0,occupied:0,closed:0,unknown:0};
+ for(const room of rs){
+   const s=selectedState(room.id,d);
+   if(s.occupied)counts.occupied++;
+   else if(s.unknown)counts.unknown++;
+   else if(s.closed)counts.closed++;
+   else counts.free++;
+ }
+ return counts;
+}
+function statusParts(counts,withRooms=false,html=false){
+ const parts=[];
+ const word=(n,label)=>withRooms?`${n} ${n===1?"room":"rooms"} ${label}`:`${n} ${label}`;
+ const add=(n,label,cls="")=>{
+   if(!n)return;
+   const value=word(n,label);
+   parts.push(html&&cls?`<span class="${cls}">${esc(value)}</span>`:esc(value));
+ };
+ add(counts.free,"vacant","status-free");
+ add(counts.occupied,"booked","status-occupied");
+ add(counts.closed,"closed","status-closed");
+ add(counts.unknown,"unknown","status-unknown");
+ return parts;
+}
+function buildingHoursLine(code,d,campus=activeCampus()){
+ const label=buildingLabel(code),info=hoursInfoForBuilding(campus,label,d);
+ if(info.status==="unknown")return"Hours unknown";
+ if(info.status==="closed")return info.note?`Closed. ${info.note}`:"Closed";
+ return`Open ${fmtMin(info.hours[0])} - ${fmtMin(info.hours[1])}`;
+}
+function buildingExpansionHtml(code,d){
+ const rs=buildingRooms(code),total=rs.length;
+ const lines=[esc(buildingHoursLine(code,d,activeCampus())),`<span class="status-count">${esc(`${total} ${total===1?"room":"rooms"} found`)}</span>`];
+ if(hasScheduleData()){
+   const parts=statusParts(countRoomStates(rs,d),false,true);
+   if(parts.length)lines.push(parts.join(", "));
+ }
+ return`<div class="building-expansion">${lines.map(x=>`<div>${x}</div>`).join("")}</div>`;
+}
+function floorDetailsHtml(fid,d){
+ const rs=floorRooms(fid),total=rs.length,lines=[`<span class="status-count">${esc(`${total} ${total===1?"room":"rooms"} found`)}</span>`];
+ if(hasScheduleData()){
+   const parts=statusParts(countRoomStates(rs,d),false,true);
+   if(parts.length)lines.push(parts.join(", "));
+ }
+ return`<div class="floor-list-details">${lines.map(x=>`<div>${x}</div>`).join("")}</div>`;
+}
+function isMobileLayout(){return mobileMedia.matches}
+function syncMobileOverlayControl(){
+ const desktop=$("#showMapOverlaysInput"),mobile=$("#mobileShowMapOverlaysInput"),fullscreen=$("#fullscreenShowMapOverlaysInput");
+ if(!desktop)return;
+ if(mobile)mobile.checked=desktop.checked;
+ if(fullscreen)fullscreen.checked=desktop.checked;
+}
+function syncMobileUI(){
+ const app=$(".app"),nav=$("#mobileNavBar"),zoomPad=$("#mapFloatingZoomPad"),frame=$("#singleMapFrame");
+ if(!app||!nav)return;
+ app.dataset.mobileView=mobileView;
+ if(!isMobileLayout()){
+   nav.hidden=true;
+   updateMapZoomControls();
+   return;
+ }
+ nav.hidden=mobileView==="options";
+ const roomMode=mobileView==="room",mapMode=mobileView==="map",listMode=mobileView==="list",mapVisible=mapMode&&frame?.hidden!==true;
+ const back=$("#mobileBackBtn"),options=$("#mobileOptionsBtn"),toggle=$("#mobileViewToggleBtn"),fullscreen=$("#mobileFullscreenBtn");
+ back.hidden=false;
+ back.disabled=roomMode?false:navHistory.length===0;
+ options.hidden=roomMode;
+ toggle.hidden=roomMode;
+ fullscreen.hidden=!mapVisible;
+ if(zoomPad)zoomPad.hidden=!mapVisible;
+ toggle.textContent=listMode?"Map View":"List View";
+ updateMapZoomControls();
+ syncMobileOverlayControl();
+}
+function openMobileOptions(){
+ if(!isMobileLayout())return;
+ mobileOptionsReturnView=mobileView==="list"?"list":"map";
+ mobileOptionsReturnScrollY=window.scrollY;
+ mobileView="options";
+ syncMobileUI();
+ window.scrollTo({top:0,behavior:"auto"});
+}
+function closeMobileOptions(){
+ if(!isMobileLayout())return;
+ mobileView=mobileOptionsReturnView||"list";
+ syncMobileUI();
+ if(mobileView==="map")refitMapAfterMobileReveal();
+ requestAnimationFrame(()=>window.scrollTo({top:mobileOptionsReturnScrollY,behavior:"auto"}));
+}
+function toggleMobileMapList(){
+ if(!isMobileLayout())return;
+ mobileView=mobileView==="list"?"map":"list";
+ syncMobileUI();
+ if(mobileView==="map")refitMapAfterMobileReveal();
+ window.scrollTo({top:0,behavior:"auto"});
+}
+function mobileBack(){
+ if(!isMobileLayout())return;
+ if(mobileView==="room"){
+   mobileView=mobileRoomReturnView||"list";
+   syncMobileUI();
+   if(mobileView==="map")refitMapAfterMobileReveal();
+   requestAnimationFrame(()=>window.scrollTo({top:mobileRoomReturnScrollY,behavior:"auto"}));
+   return;
+ }
+ if(mobileView==="options"){closeMobileOptions();return}
+ goBack();
+}
+function currentNavState(){return{campus:activeCampus(),building:$("#buildingSelect").value,floor:$("#floorSelect").value}}
+function navStatesEqual(a,b){return!!a&&!!b&&a.campus===b.campus&&a.building===b.building&&a.floor===b.floor}
+function updateBackButton(){
+ const btn=$("#backBtn");if(btn)btn.disabled=navHistory.length===0;
+ if(isMobileLayout())syncMobileUI();
+}
+function syncNavState(){lastNavState=currentNavState();updateBackButton()}
+function rememberLastNav(){
+ if(!lastNavState?.building||!lastNavState?.floor)return;
+ if(navHistory.length&&navStatesEqual(navHistory.at(-1),lastNavState))return;
+ navHistory.push({...lastNavState});
+ updateBackButton();
+}
+function goBack(){
+ if(!navHistory.length)return;
+ $("#roomSearchInput").value="";updateRoomSearchClearButton();
+ const target=navHistory.pop();
+ $("#campusSelect").value=target.campus||"AB";
+ fillBuildings();
+ $("#buildingSelect").value=target.building;
+ fillFloors();
+ if([...$("#floorSelect").options].some(o=>o.value===target.floor))$("#floorSelect").value=target.floor;
+ else if($("#floorSelect").options.length)$("#floorSelect").selectedIndex=0;
+ selected=null;selectedBuilding=null;
+ syncNavState();
+ render();
+}
+function selectFloor(fid){
+ if(!META[fid]||fid===curFloor())return;
+ $("#roomSearchInput").value="";updateRoomSearchClearButton();
+ rememberLastNav();
+ selected=null;
+ selectedBuilding=null;
+ $("#floorSelect").value=fid;
+ syncNavState();
+ render();
+}
+function planHeading(meta){
+ const campus=campusName(meta?.campusCode||activeCampus());
+ return meta?.buildingCode==="OUTSIDE"
+   ?`${campus}, Outside, ${meta.floor}`
+   :`${campus}, Building ${meta.building}, ${meta.floor}`;
+}
+function planAlt(meta){return meta?.buildingCode==="OUTSIDE"?`UFV ${campusName(meta?.campusCode)} campus map ${meta.floor}`:`UFV ${campusName(meta?.campusCode)} Building ${meta.building} ${meta.floor} floor plan`}
+function otherTitle(when){return`${campusName(activeCampus())}, Other | ${when}`}
+function showNoVisualMap(){
+ resetMapView();
+ $("#mapToolbar").hidden=false;
+ $("#mapZoomControls").hidden=true;
+ $("#overlayToggleWrap").hidden=true;
+ $("#mapLegend").hidden=true;
+ $("#singleMapFrame").hidden=true;
+ $("#allFloorsGrid").hidden=true;
+ $("#roomOverlay").innerHTML="";
+}
+function updateWorkspaceHelp(meta,allFloors=false){
+ $("#workspaceHelp").textContent=allFloors
+   ?"Click a floor from the list or the floor plans to view that floor."
+   :meta?.buildingCode==="OUTSIDE"
+   ?"Click a building from the map or the list to jump to that building."
+   :"Click a room from the map or the list to view the full room availability for the selected day.";
+}
+function selectBuilding(code){
+ if(mapFullscreen){closeMapFullscreen(()=>selectBuilding(code));return}
+ const next=String(code||"").trim().toUpperCase();
+ if(!next||next==="OTHER"||!buildingPlans(next).length)return;
+ $("#roomSearchInput").value="";updateRoomSearchClearButton();
+ rememberLastNav();
+ selected=null;
+ selectedBuilding=null;
+ $("#buildingSelect").value=next;
+ fillFloors();
+ if($("#floorSelect").options.length)$("#floorSelect").selectedIndex=0;
+ syncNavState();
+ render();
+}
+const ALL_CAMPUSES_BUILDING="__ALL_CAMPUSES_BUILDING__",ALL_CAMPUSES_FLOOR="__ALL_CAMPUSES_FLOOR__";
+function fillBuildings(){
+ if(isAllCampuses()){$("#buildingSelect").disabled=true;$("#buildingSelect").innerHTML=`<option value="${ALL_CAMPUSES_BUILDING}">All buildings</option>`;return}
+ $("#buildingSelect").disabled=false;const byCode=new Map();for(const[,m]of activePlans())if(m.buildingCode&&!byCode.has(m.buildingCode))byCode.set(m.buildingCode,m);
+ const list=[...byCode.entries()].sort(([a,ma],[b,mb])=>{if(a==="OUTSIDE")return-1;if(b==="OUTSIDE")return 1;return ma.building.localeCompare(mb.building,undefined,{numeric:true,sensitivity:"base"})});
+ $("#buildingSelect").innerHTML=list.map(([code,m])=>`<option value="${esc(code)}">${code==="OUTSIDE"?"Outside":`Building ${esc(m.building)}`}</option>`).join("");if(byCode.has("OUTSIDE"))$("#buildingSelect").value="OUTSIDE";
+}
+function fillFloors(){
+ if(isAllCampuses()){$("#floorSelect").disabled=true;$("#floorSelect").innerHTML=`<option value="${ALL_CAMPUSES_FLOOR}">All floors</option>`;return}
+ $("#floorSelect").disabled=false;const b=$("#buildingSelect").value,e=buildingPlans(b),options=[];if(b!=="OUTSIDE"&&e.length>1)options.push(`<option value="${ALL_FLOORS_ID}">All floors</option>`);options.push(...e.map(([id,m])=>`<option value="${esc(id)}">${esc(m.floor)}</option>`));$("#floorSelect").innerHTML=options.join("");
+}
+function selectableDays(){return scheduleDates.slice()}
+function updateDayNavButtons(){
+ const input=$("#daySelect"),prev=$("#prevDayBtn"),next=$("#nextDayBtn"),days=selectableDays(),value=input?.value||"";
+ if(!prev||!next)return;
+ const unavailable=!input||input.disabled||!value||!days.length;
+ prev.disabled=unavailable||value<=days[0];
+ next.disabled=unavailable||value>=days[days.length-1];
+}
+function fillDays(){
+ const input=$("#daySelect"),days=selectableDays();
+ if(!days.length){
+   input.value="";
+   input.removeAttribute("min");
+   input.removeAttribute("max");
+   input.removeAttribute("title");
+   updateDayNavButtons();
+   return;
+ }
+ const first=days[0],last=days[days.length-1],today=localTodayISO();
+ input.min=first;
+ input.max=last;
+ input.value=days.includes(today)?today:first;
+ input.title=`Available ${fmtDate(first,true)} through ${fmtDate(last,true)}`;
+ updateDayNavButtons();
+}
+function shiftDay(delta){
+ const input=$("#daySelect"),days=selectableDays();
+ if(!input?.value||!days.length||!delta)return;
+ const value=input.value,i=days.indexOf(value);
+ let next=null;
+ if(i>=0){
+   next=days[i+(delta<0?-1:1)]||null;
+ }else if(delta<0){
+   for(let j=days.length-1;j>=0;j--){if(days[j]<value){next=days[j];break}}
+ }else{
+   next=days.find(day=>day>value)||null;
+ }
+ if(!next)return;
+ input.value=next;
+ updateDayNavButtons();
+ input.dispatchEvent(new Event("change",{bubbles:true}));
+}
+function setTime(){const p=vancouverNowParts();$("#timeInput").value=`${String(p.hour).padStart(2,"0")}:${String(p.minute).padStart(2,"0")}`}
+function clearEndTime(){ $("#endTimeInput").value=""; render() }
+function goTodayNow(){const today=localTodayISO(),input=$("#daySelect");if(today>=input.min&&today<=input.max)input.value=today;setTime();selected=null;selectedBuilding=null;render()}
+function selectRoom(id){
+ if(mapFullscreen){closeMapFullscreen(()=>selectRoom(id));return}
+ selectedBuilding=null;
+ selected=id;
+ if(isMobileLayout()){
+   mobileRoomReturnView=mobileView==="list"?"list":"map";
+   mobileRoomReturnScrollY=window.scrollY;
+   mobileView="room";
+   render();
+   window.scrollTo({top:0,behavior:"auto"});
+   return;
+ }
+ render();
+ requestAnimationFrame(()=>$("#detailsPanel").scrollIntoView({behavior:"smooth",block:"start"}));
+}
+function renderRoomSummary(rs,d,outside=false){
+ const summary=$("#roomSummary");
+ if(!summary)return;
+ const total=rs.length;
+ const lines=[`<span class="status-count">${esc(`${total} ${total===1?"room":"rooms"} found`)}</span>`];
+ if(hasScheduleData()){
+   const parts=statusParts(countRoomStates(rs,d),false,true);
+   if(parts.length)lines.push(parts.join(", "));
+ }
+ summary.innerHTML=lines.map(x=>`<div class="room-summary-line">${x}</div>`).join("");
+}
+function renderRoomList(){
+ const f=curFloor(),d=curDate();
+ if(searchActive()){renderSearchResults();return}
+ if(f===OTHER_FLOOR_ID){
+   const rs=otherRooms();
+   renderRoomSummary(rs,d,false);
+   $("#roomList").innerHTML=rs.map(room=>{
+     const s=selectedState(room.id,d),kind=stateKind(s),status=roomListStatus(room.id,d);
+     return`<button type="button" class="room-list-button room-entry${room.id===selected?" selected":""}" data-id="${esc(room.id)}"><span class="room-status-square ${kind}" aria-hidden="true"></span><span class="room-list-text"><span class="room-list-name">${esc(roomDisplayLabel(room))}</span><span class="room-list-until ${status.kind}">${esc(status.text)}</span></span></button>`;
+   }).join("");
+   $("#roomList").querySelectorAll(".room-list-button[data-id]").forEach(b=>b.addEventListener("click",()=>selectRoom(b.dataset.id)));
+   return;
+ }
+ if(f===ALL_FLOORS_ID){
+   const floors=buildingPlans(),rs=buildingRooms($("#buildingSelect").value);
+   renderRoomSummary(rs,d,false);
+   $("#roomList").innerHTML=floors.map(([fid,meta])=>`<div class="floor-list-item navigation-list-item" data-floor="${esc(fid)}" role="button" tabindex="0" aria-label="${esc(meta.floor)}: view floor"><div class="room-list-button floor-link-label"><span class="building-link-square" aria-hidden="true"></span><span>${esc(meta.floor)}</span></div>${floorDetailsHtml(fid,d)}</div>`).join("");
+   $("#roomList").querySelectorAll(".floor-list-item[data-floor]").forEach(item=>{
+     const choose=()=>selectFloor(item.dataset.floor);
+     item.addEventListener("click",choose);
+     item.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();choose()}});
+   });
+   return;
+ }
+ const rs=floorRooms(f),meta=META[f],outside=meta?.buildingCode==="OUTSIDE",links=outside?buildingLinksForFloor(f):[];
+ renderRoomSummary(summaryRoomsForFloor(f),d,outside);
+ const linkHtml=links.map(x=>`<div class="building-list-item navigation-list-item" data-building="${esc(x.code)}" role="button" tabindex="0" aria-label="${esc(x.label)}: jump to building"><div class="room-list-button building-link-label"><span class="building-link-square" aria-hidden="true"></span><span>${esc(x.label)}</span></div>${buildingExpansionHtml(x.code,d)}</div>`).join("");
+ const roomHtml=rs.map(room=>{
+   const s=selectedState(room.id,d),kind=stateKind(s),status=roomListStatus(room.id,d);
+   return`<button type="button" class="room-list-button room-entry${room.id===selected?" selected":""}" data-id="${esc(room.id)}"><span class="room-status-square ${kind}" aria-hidden="true"></span><span class="room-list-text"><span class="room-list-name">${esc(roomDisplayLabel(room))}</span><span class="room-list-until ${status.kind}">${esc(status.text)}</span></span></button>`;
+ }).join("");
+ $("#roomList").innerHTML=linkHtml+roomHtml;
+ $("#roomList").querySelectorAll(".building-list-item[data-building]").forEach(item=>{
+   const choose=()=>selectBuilding(item.dataset.building);
+   item.addEventListener("click",choose);
+   item.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();choose()}});
+ });
+ $("#roomList").querySelectorAll(".room-list-button[data-id]").forEach(b=>b.addEventListener("click",()=>selectRoom(b.dataset.id)));
+}
+function renderAll(){
+ $("#detailsPanel").hidden=true;
+ $("#detailsPanel").innerHTML="";
+}
+function renderOne(room){
+ const d=curDate(),segments=daySegments(room.id,d),capacity=String(room.capacity||"").trim();
+ const timeline=segments.map(seg=>{
+   if(seg.kind==="unknown")return`<div class="event-row unknown-row"><div class="event-time">Hours</div><div class="event-name unknown">${esc(seg.title)}</div></div>`;
+   if(seg.kind==="closed")return`<div class="event-row closed-row"><div class="event-time">Closed</div><div class="event-name closed">${esc(seg.title)}</div></div>`;
+   const time=`${fmtMin(seg.start)} - ${fmtMin(seg.end)}`;
+   if(seg.kind==="free")return`<div class="event-row free-row"><div class="event-time">${esc(time)}</div><div class="event-name free">No bookings scheduled</div></div>`;
+   return`<div class="event-row busy-row"><div class="event-time">${esc(time)}</div><div class="event-name busy">${esc(seg.title)}</div></div>`;
+ }).join("");
+ $("#detailsPanel").hidden=false;
+ $("#detailsPanel").innerHTML=`<div class="details-top selected-room-heading"><div><h2>${esc(roomDisplayLabel(room))} - ${esc(roomTypeLabel(room))}${capacity?` | ${esc(capacity)} capacity`:""}</h2><p class="selected-date">${esc(fmtDate(d,true))}</p></div></div><div class="day-card"><div class="event-list">${timeline}</div></div>`;
+}
+function renderDetails(){
+ if(selectedBuilding){renderAll();return}
+ const r=selected?roomById.get(selected):null;
+ r?renderOne(r):renderAll();
+}
+function mapClampZoom(v){return Math.max(1,Math.min(5,v))}
+function mapRenderedSize(zoom=mapZoom){
+ const scale=mapFitScale*zoom;
+ return{width:mapNaturalWidth*scale,height:mapNaturalHeight*scale};
+}
+function mapFitForCurrentFrame(){
+ const frame=$("#singleMapFrame");
+ if(!frame||!mapNaturalWidth||!mapNaturalHeight)return 0;
+ const w=frame.clientWidth,h=frame.clientHeight;
+ if(!(w>0))return 0;
+ const widthFit=w/mapNaturalWidth;
+ if(mapFullscreen&&h>0)return Math.min(widthFit,h/mapNaturalHeight);
+ return widthFit;
+}
+function captureMapCenter(){
+ const frame=$("#singleMapFrame"),scale=mapFitScale*mapZoom;
+ if(!frame||!(frame.clientWidth>0)||!(frame.clientHeight>0)||!(scale>0))return null;
+ return{x:(frame.clientWidth/2-mapPanX)/scale,y:(frame.clientHeight/2-mapPanY)/scale};
+}
+function updateMapFitScale(preservePan=true,centerOverride=null){
+ const frame=$("#singleMapFrame");
+ if(!frame||!mapNaturalWidth||!mapNaturalHeight)return;
+ const nextFit=mapFitForCurrentFrame();
+ if(!(nextFit>0))return;
+ if(centerOverride){
+   mapFitScale=nextFit;
+   const scale=mapFitScale*mapZoom;
+   mapPanX=frame.clientWidth/2-centerOverride.x*scale;
+   mapPanY=frame.clientHeight/2-centerOverride.y*scale;
+ }else if(preservePan&&mapFitScale>0&&Number.isFinite(mapFitScale)){
+   const ratio=nextFit/mapFitScale;
+   mapFitScale=nextFit;
+   mapPanX*=ratio;
+   mapPanY*=ratio;
+ }else mapFitScale=nextFit;
+ if(!mapFullscreen)frame.style.height=`${Math.max(1,mapNaturalHeight*mapFitScale)}px`;
+}
+function refitMapAfterMobileReveal(){
+ requestAnimationFrame(()=>{
+   const frame=$("#singleMapFrame");
+   if(!frame||frame.hidden||frame.clientWidth<=0)return;
+   updateMapFitScale(true);
+   applyMapTransform();
+ });
+}
+function setMapNativeSize(width,height){
+ width=Number(width);height=Number(height);
+ if(!(width>0)||!(height>0))return;
+ mapNaturalWidth=width;
+ mapNaturalHeight=height;
+ const frame=$("#singleMapFrame"),nextFit=mapFitForCurrentFrame();
+ if(nextFit>0){
+   mapFitScale=nextFit;
+   if(!mapFullscreen)frame.style.height=`${Math.max(1,mapNaturalHeight*mapFitScale)}px`;
+ }else if(!(mapFitScale>0&&Number.isFinite(mapFitScale)))mapFitScale=1;
+ applyMapTransform();
+}
+function mapPanBounds(zoom=mapZoom){
+ const frame=$("#singleMapFrame"),size=mapRenderedSize(zoom),w=frame.clientWidth,h=frame.clientHeight;
+ const bx=size.width<=w?{min:(w-size.width)/2,max:(w-size.width)/2}:{min:w-size.width,max:0};
+ const by=size.height<=h?{min:(h-size.height)/2,max:(h-size.height)/2}:{min:h-size.height,max:0};
+ return{minX:bx.min,maxX:bx.max,minY:by.min,maxY:by.max};
+}
+function clampMapPan(){
+ const b=mapPanBounds();
+ mapPanX=Math.max(b.minX,Math.min(b.maxX,mapPanX));
+ mapPanY=Math.max(b.minY,Math.min(b.maxY,mapPanY));
+}
+function updateMapZoomControls(){
+ const floatingZoomIn=$("#mapFloatingZoomInBtn"),floatingZoomOut=$("#mapFloatingZoomOutBtn"),fullZoomIn=$("#fullscreenMapZoomInBtn"),fullZoomOut=$("#fullscreenMapZoomOutBtn");
+ for(const btn of [floatingZoomIn,fullZoomIn])if(btn)btn.disabled=mapZoom>=5-.0001;
+ for(const btn of [floatingZoomOut,fullZoomOut])if(btn)btn.disabled=mapZoom<=1+.0001;
+ const floatingPad=$("#mapFloatingZoomPad"),frame=$("#singleMapFrame");
+ if(floatingPad)floatingPad.hidden=frame?.hidden===true||mapFullscreen||(isMobileLayout()&&mobileView!=="map");
+}
+function applyMapTransform(){
+ const frame=$("#singleMapFrame"),stage=$("#mapPanStage");
+ if(mapNaturalWidth&&mapNaturalHeight){
+   const size=mapRenderedSize();
+   stage.style.width=`${Math.max(1,size.width)}px`;
+   stage.style.height=`${Math.max(1,size.height)}px`;
+   if(frame&&mapFitScale>0&&!mapFullscreen)frame.style.height=`${Math.max(1,mapNaturalHeight*mapFitScale)}px`;
+ }
+ clampMapPan();
+ stage.style.transform=`translate(${mapPanX}px,${mapPanY}px)`;
+ updateMapZoomControls();
+}
+function resetMapView(){
+ mapZoom=1;mapPanX=0;mapPanY=0;
+ mapPointers.clear();mapDragStart=null;mapPinchStart=null;mapDidDrag=false;
+ $("#singleMapFrame")?.classList.remove("dragging");
+ applyMapTransform();
+}
+function openMapFullscreen(){
+ const frame=$("#singleMapFrame"),overlay=$("#mapFullscreen"),canvas=$("#mapFullscreenCanvas");
+ if(mapFullscreen||!frame||frame.hidden||!canvas||!mapNaturalWidth||!mapNaturalHeight)return;
+ const center=captureMapCenter();
+ mapFullscreen=true;
+ mapFullscreenReturnScrollY=window.scrollY;
+ mapFullscreenOpener=document.activeElement;
+ const title=String($("#workspaceTitle")?.textContent||"Floor plan").trim();
+ $("#fullscreenMapTitle").textContent=title||"Floor plan";
+ syncMobileOverlayControl();
+ overlay.hidden=false;
+ document.body.classList.add("map-fullscreen-open");
+ canvas.appendChild(frame);
+ requestAnimationFrame(()=>{
+   updateMapFitScale(false,center);
+   applyMapTransform();
+   $("#fullscreenCloseBtn")?.focus({preventScroll:true});
+ });
+}
+function closeMapFullscreen(after=null){
+ if(!mapFullscreen){if(typeof after==="function")after();return}
+ const frame=$("#singleMapFrame"),center=captureMapCenter(),home=$("#mapFrameHome"),overlay=$("#mapFullscreen"),opener=mapFullscreenOpener;
+ mapFullscreen=false;
+ if(home&&frame)home.appendChild(frame);
+ if(overlay)overlay.hidden=true;
+ document.body.classList.remove("map-fullscreen-open");
+ requestAnimationFrame(()=>{
+   updateMapFitScale(false,center);
+   applyMapTransform();
+   window.scrollTo({top:mapFullscreenReturnScrollY,behavior:"auto"});
+   if(typeof after==="function")after();
+   else opener?.focus?.({preventScroll:true});
+ });
+ mapFullscreenOpener=null;
+}
+function updateMapOverlayVisibility(){
+ const visible=$("#showMapOverlaysInput")?.checked!==false,svg=$("#roomOverlay");
+ if(svg)svg.style.display=visible?"":"none";
+}
+function mapZoomAt(clientX,clientY,next){
+ const frame=$("#singleMapFrame"),rect=frame.getBoundingClientRect(),old=mapZoom;
+ next=mapClampZoom(next);
+ if(Math.abs(next-old)<.0001)return;
+ const x=clientX-rect.left,y=clientY-rect.top,ratio=next/old;
+ mapPanX=x-(x-mapPanX)*ratio;
+ mapPanY=y-(y-mapPanY)*ratio;
+ mapZoom=next;
+ applyMapTransform();
+}
+function mapZoomStep(direction){
+ const frame=$("#singleMapFrame"),rect=frame.getBoundingClientRect(),factor=1.25;
+ const next=direction>0?mapZoom*factor:mapZoom/factor;
+ mapZoomAt(rect.left+rect.width/2,rect.top+rect.height/2,next);
+}
+function mapClickSuppressed(){return performance.now()<mapSuppressClickUntil}
+function mapPointerDown(e){
+ if(e.pointerType==="mouse"&&e.button!==0)return;
+ mapPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ mapDidDrag=false;
+ if(mapPointers.size===1){
+   mapDragStart={id:e.pointerId,x:e.clientX,y:e.clientY,panX:mapPanX,panY:mapPanY,captured:false};
+ }else if(mapPointers.size===2){
+   mapDragStart=null;
+   const frame=$("#singleMapFrame");
+   for(const id of mapPointers.keys()){try{frame.setPointerCapture(id)}catch{}}
+   const pts=[...mapPointers.values()],dx=pts[1].x-pts[0].x,dy=pts[1].y-pts[0].y;
+   mapPinchStart={
+     dist:Math.max(1,Math.hypot(dx,dy)),
+     zoom:mapZoom,
+     panX:mapPanX,panY:mapPanY,
+     cx:(pts[0].x+pts[1].x)/2,cy:(pts[0].y+pts[1].y)/2
+   };
+   mapDidDrag=true;
+ }
+}
+function mapPointerMove(e){
+ if(!mapPointers.has(e.pointerId))return;
+ mapPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ const frame=$("#singleMapFrame");
+ if(mapPointers.size>=2&&mapPinchStart){
+   const pts=[...mapPointers.values()].slice(0,2),dx=pts[1].x-pts[0].x,dy=pts[1].y-pts[0].y;
+   const dist=Math.max(1,Math.hypot(dx,dy)),next=mapClampZoom(mapPinchStart.zoom*(dist/mapPinchStart.dist));
+   const rect=frame.getBoundingClientRect(),startX=mapPinchStart.cx-rect.left,startY=mapPinchStart.cy-rect.top;
+   const cx=(pts[0].x+pts[1].x)/2-rect.left,cy=(pts[0].y+pts[1].y)/2-rect.top,ratio=next/mapPinchStart.zoom;
+   mapPanX=cx-(startX-mapPinchStart.panX)*ratio;
+   mapPanY=cy-(startY-mapPinchStart.panY)*ratio;
+   mapZoom=next;mapDidDrag=true;frame.classList.add("dragging");applyMapTransform();
+   e.preventDefault();return;
+ }
+ if(mapPointers.size===1&&mapDragStart&&mapDragStart.id===e.pointerId){
+   const dx=e.clientX-mapDragStart.x,dy=e.clientY-mapDragStart.y;
+   if(!mapDidDrag&&Math.hypot(dx,dy)>6){
+     mapDidDrag=true;
+     if(!mapDragStart.captured){
+       try{frame.setPointerCapture(e.pointerId);mapDragStart.captured=true}catch{}
+     }
+   }
+   if(mapDidDrag){
+     mapPanX=mapDragStart.panX+dx;
+     mapPanY=mapDragStart.panY+dy;
+     frame.classList.add("dragging");
+     applyMapTransform();
+     e.preventDefault();
+   }
+ }
+}
+function mapPointerEnd(e){
+ const wasDrag=mapDidDrag;
+ mapPointers.delete(e.pointerId);
+ const frame=$("#singleMapFrame");
+ if(wasDrag)mapSuppressClickUntil=performance.now()+250;
+ if(mapPointers.size<2)mapPinchStart=null;
+ if(mapPointers.size===0){
+   mapDragStart=null;mapDidDrag=false;frame.classList.remove("dragging");
+ }else if(mapPointers.size===1){
+   const [id,p]=[...mapPointers.entries()][0];
+   mapDragStart={id,x:p.x,y:p.y,panX:mapPanX,panY:mapPanY,captured:false};
+ }
+}
+function renderAllFloorsMap(noSchedule=false){
+ const floors=buildingPlans(),code=$("#buildingSelect").value,meta=floors[0]?.[1],d=curDate()||localTodayISO(),m=curMin(),end=endMin();
+ resetMapView();
+ $("#mapToolbar").hidden=false;
+ $("#mapZoomControls").hidden=true;
+ $("#overlayToggleWrap").hidden=true;
+ $("#mapLegend").hidden=true;
+ updateWorkspaceHelp(meta,true);
+ const when=noSchedule?"No schedule found":end!==null&&end>m?`${fmtDate(d,true)}, ${fmtMin(m)} - ${fmtMin(end)}`:`${fmtDate(d,true)}, ${fmtMin(m)}`;
+ $("#workspaceTitle").textContent=`${campusName(meta?.campusCode||activeCampus())}, Building ${esc(meta?.building||buildingLabel(code))}, All floors | ${when}`;
+ $("#singleMapFrame").hidden=true;
+ const grid=$("#allFloorsGrid");
+ grid.hidden=false;
+ grid.style.setProperty("--floor-cols",String(chooseFloorGridColumns(floors.length)));
+ grid.innerHTML=floors.map(([fid,fm])=>`<button type="button" class="floor-plan-card" data-floor="${esc(fid)}"><img class="floor-plan-preview" src="${plans[fid]}" alt="${esc(planAlt(fm))}"><span class="floor-plan-label">${esc(fm.floor)}</span></button>`).join("");
+ grid.querySelectorAll(".floor-plan-card").forEach(b=>b.addEventListener("click",()=>selectFloor(b.dataset.floor)));
+ $("#roomOverlay").innerHTML="";
+}
+function renderMap(){
+ const f=curFloor(),d=curDate(),m=curMin(),end=endMin();
+ if(f===OTHER_FLOOR_ID){
+   $("#workspaceHelp").textContent="Click a room from the list to view the full room availability for the selected day.";
+   const when=end!==null&&end>m?`${fmtDate(d,true)}, ${fmtMin(m)} - ${fmtMin(end)}`:`${fmtDate(d,true)}, ${fmtMin(m)}`;
+   $("#workspaceTitle").textContent=otherTitle(when);
+   showNoVisualMap();
+   return;
+ }
+ if(f===ALL_FLOORS_ID){renderAllFloorsMap(false);return}
+ const meta=META[f],img=$("#floorImage"),svg=$("#roomOverlay"),rs=floorRooms(f);
+ resetMapView();
+ $("#mapToolbar").hidden=false;
+ $("#mapZoomControls").hidden=false;
+ $("#overlayToggleWrap").hidden=false;
+ $("#mapLegend").hidden=false;
+ $("#singleMapFrame").hidden=false;
+ $("#allFloorsGrid").hidden=true;
+ updateMapOverlayVisibility();
+ updateWorkspaceHelp(meta);
+ const when=end!==null&&end>m?`${fmtDate(d,true)}, ${fmtMin(m)} - ${fmtMin(end)}`:`${fmtDate(d,true)}, ${fmtMin(m)}`;
+ $("#workspaceTitle").textContent=`${planHeading(meta)} | ${when}`;
+ const draw=()=>{
+   setMapNativeSize(img.naturalWidth,img.naturalHeight);
+   svg.setAttribute("viewBox",`0 0 ${img.naturalWidth} ${img.naturalHeight}`);
+   svg.innerHTML="";
+   if(meta?.buildingCode==="OUTSIDE"){
+     for(const link of buildingLinksForFloor(f)){
+       const p=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+       p.setAttribute("points",link.points.map(q=>q.join(",")).join(" "));
+       p.setAttribute("class","building-shape");
+       p.setAttribute("tabindex","0");p.setAttribute("role","button");
+       p.setAttribute("aria-label",`${link.label}: jump to first floor`);
+       const choose=()=>{if(mapClickSuppressed())return;selectBuilding(link.code)};
+       p.addEventListener("click",choose);
+       p.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();choose()}});
+       svg.appendChild(p);
+     }
+   }
+   const map=new Map(rs.map(r=>[r.id,r]));
+   for(const[id,entry]of Object.entries(planRoomEntries(f))){
+     if(!map.has(id))continue;
+     const pts=overlayPoints(entry);if(pts.length<3)continue;
+     const s=selectedState(id,d),kind=stateKind(s),p=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+     p.setAttribute("points",pts.map(q=>q.join(",")).join(" "));
+     p.setAttribute("class",`room-shape ${kind}${id===selected?" selected":""}`);
+     p.setAttribute("tabindex","0");p.setAttribute("role","button");
+     p.setAttribute("aria-label",`${id.replace("-"," ")}: ${s.occupied?"booked":s.unknown?"hours unknown":s.closed?"closed":"vacant"}`);
+     const choose=()=>{if(mapClickSuppressed())return;selectRoom(id)};
+     p.addEventListener("click",choose);
+     p.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();choose()}});
+     svg.appendChild(p);
+   }
+ };
+ img.onload=draw;img.src=plans[f];img.alt=planAlt(meta);if(img.complete&&img.naturalWidth)draw()
+}
+function renderAllCampusesView(noSchedule=false){
+ selected=null;selectedBuilding=null;const d=curDate()||localTodayISO(),m=curMin(),end=endMin(),rs=campusRooms();
+ resetMapView();showNoVisualMap();$("#workspaceHelp").textContent="";
+ const when=noSchedule?"No schedule found":end!==null&&end>m?`${fmtDate(d,true)}, ${fmtMin(m)} - ${fmtMin(end)}`:`${fmtDate(d,true)}, ${fmtMin(m)}`;$("#workspaceTitle").textContent=`All Campuses | ${when}`;
+ if(searchActive()){renderSearchResults()}else{renderRoomSummary(rs,d,false);$("#roomList").innerHTML=rs.map(room=>roomSearchRow(room,d)).join("");$("#roomList").querySelectorAll("[data-search-id]").forEach(b=>b.addEventListener("click",()=>jumpToSearchRoom(b.dataset.searchId)))}
+ $("#detailsPanel").hidden=true;$("#detailsPanel").innerHTML="";
+}
+function renderNoSchedule(){
+ selected=null;if(isAllCampuses()){renderAllCampusesView(true);return}
+ const f=curFloor(),d=curDate()||localTodayISO();
+ if(searchActive()){
+   renderSearchResults();
+   const meta=META[f];
+   if(f===ALL_FLOORS_ID)renderAllFloorsMap(true);
+   else if(f===OTHER_FLOOR_ID)showNoVisualMap();
+   else{
+     $("#workspaceTitle").textContent=`${planHeading(meta)} | No schedule found`;
+     $("#mapToolbar").hidden=false;$("#mapZoomControls").hidden=false;$("#overlayToggleWrap").hidden=false;$("#mapLegend").hidden=false;$("#singleMapFrame").hidden=false;$("#allFloorsGrid").hidden=true;updateMapOverlayVisibility();
+   }
+   $("#detailsPanel").hidden=false;
+   $("#detailsPanel").innerHTML=`<div class="details-top"><div><h2>No schedule found</h2></div></div>`;
+   return;
+ }
+ if(f===OTHER_FLOOR_ID){
+   selectedBuilding=null;
+   const rs=otherRooms();
+   renderRoomSummary(rs,d,false);
+   $("#workspaceHelp").textContent="Click a room from the list to view the full room availability for the selected day.";
+   $("#workspaceTitle").textContent="Other | No schedule found";
+   $("#roomList").innerHTML=rs.map(room=>`<div class="room-list-button" aria-disabled="true"><span class="room-status-square closed" aria-hidden="true"></span><span>${esc(roomDisplayLabel(room))}</span></div>`).join("");
+   showNoVisualMap();
+   $("#detailsPanel").hidden=false;
+   $("#detailsPanel").innerHTML=`<div class="details-top"><div><h2>No schedule found</h2></div></div>`;
+   return;
+ }
+ if(f===ALL_FLOORS_ID){
+   selectedBuilding=null;
+   renderRoomSummary(buildingRooms($("#buildingSelect").value),d,false);
+   const floors=buildingPlans();
+   $("#roomList").innerHTML=floors.map(([fid,meta])=>`<div class="floor-list-item navigation-list-item" data-floor="${esc(fid)}" role="button" tabindex="0" aria-label="${esc(meta.floor)}: view floor"><div class="room-list-button floor-link-label"><span class="building-link-square" aria-hidden="true"></span><span>${esc(meta.floor)}</span></div>${floorDetailsHtml(fid,d)}</div>`).join("");
+   $("#roomList").querySelectorAll(".floor-list-item[data-floor]").forEach(item=>{
+     const choose=()=>selectFloor(item.dataset.floor);
+     item.addEventListener("click",choose);
+     item.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();choose()}});
+   });
+   renderAllFloorsMap(true);
+   $("#detailsPanel").hidden=false;
+   $("#detailsPanel").innerHTML=`<div class="details-top"><div><h2>No schedule found</h2></div></div>`;
+   return;
+ }
+ const meta=META[f],outside=meta?.buildingCode==="OUTSIDE",links=outside?buildingLinksForFloor(f):[],rs=floorRooms(f);
+ resetMapView();
+ $("#mapToolbar").hidden=false;
+ $("#mapZoomControls").hidden=false;
+ $("#overlayToggleWrap").hidden=false;
+ $("#mapLegend").hidden=false;
+ $("#singleMapFrame").hidden=false;
+ $("#allFloorsGrid").hidden=true;
+ updateMapOverlayVisibility();
+ updateWorkspaceHelp(meta);
+ renderRoomSummary(summaryRoomsForFloor(f),d,outside);
+ $("#workspaceTitle").textContent=`${planHeading(meta)} | No schedule found`;
+ const linkHtml=links.map(x=>`<div class="building-list-item navigation-list-item" data-building="${esc(x.code)}" role="button" tabindex="0" aria-label="${esc(x.label)}: jump to building"><div class="room-list-button building-link-label"><span class="building-link-square" aria-hidden="true"></span><span>${esc(x.label)}</span></div>${buildingExpansionHtml(x.code,d)}</div>`).join("");
+ const roomHtml=rs.map(room=>`<div class="room-list-button room-entry" aria-disabled="true"><span class="room-status-square closed" aria-hidden="true"></span><span class="room-list-text"><span class="room-list-name">${esc(roomDisplayLabel(room))}</span><span class="room-list-until unknown">Schedule unavailable</span></span></div>`).join("");
+ $("#roomList").innerHTML=linkHtml+roomHtml;
+ $("#roomList").querySelectorAll(".building-list-item[data-building]").forEach(item=>{
+   const choose=()=>selectBuilding(item.dataset.building);
+   item.addEventListener("click",choose);
+   item.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();choose()}});
+ });
+ $("#detailsPanel").hidden=false;
+ $("#detailsPanel").innerHTML=`<div class="details-top"><div><h2>No schedule found</h2></div></div>`;
+ const img=$("#floorImage"),svg=$("#roomOverlay");
+ const draw=()=>{
+   setMapNativeSize(img.naturalWidth,img.naturalHeight);
+   svg.setAttribute("viewBox",`0 0 ${img.naturalWidth} ${img.naturalHeight}`);svg.innerHTML="";
+   if(outside){
+     for(const link of links){
+       const p=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+       p.setAttribute("points",link.points.map(q=>q.join(",")).join(" "));
+       p.setAttribute("class","building-shape");p.setAttribute("tabindex","0");p.setAttribute("role","button");
+       p.setAttribute("aria-label",`${link.label}: jump to first floor`);
+       const choose=()=>{if(mapClickSuppressed())return;selectBuilding(link.code)};
+       p.addEventListener("click",choose);p.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();choose()}});
+       svg.appendChild(p);
+     }
+   }
+ };
+ img.onload=draw;img.src=plans[f];img.alt=planAlt(meta);if(img.complete&&img.naturalWidth)draw();
+}
+function render(){
+ try{
+   if(isAllCampuses()){renderAllCampusesView(!hasScheduleData());return}
+   if(!curFloor())return;
+   if(curFloor()===OTHER_FLOOR_ID){
+     selectedBuilding=null;
+     if(!hasScheduleData()){renderNoSchedule();return}
+     if(selected&&!otherRooms().some(r=>r.id===selected))selected=null;
+     renderRoomList();
+     renderDetails();
+     renderMap();
+     return;
+   }
+   if(curFloor()===ALL_FLOORS_ID){
+     selected=null;
+     selectedBuilding=null;
+     if(!hasScheduleData()){renderNoSchedule();return}
+     renderRoomList();
+     renderAll();
+     renderMap();
+     return;
+   }
+   if(META[curFloor()]?.buildingCode!=="OUTSIDE")selectedBuilding=null;
+   if(!hasScheduleData()){renderNoSchedule();return}
+   if(selected&&!floorRooms(curFloor()).some(r=>r.id===selected))selected=null;
+   renderRoomList();
+   renderDetails();
+   renderMap();
+ }finally{
+   syncMobileUI();
+ }
+}
+async function init(){
+ allRooms=norm(DATA.rooms);
+ classrooms=allRooms.filter(r=>r.isClassroom);
+ roomById=new Map(allRooms.map(r=>[r.id,r]));
+ await loadAutomaticSchedule();
+ updateLastUpdatedLabel();
+ buildSchedule();
+ fillBuildings();
+ fillFloors();
+ syncNavState();
+ fillDays();
+ setTime();
+ $("#endTimeInput").value="";
+ updateScheduleControls();
+ render();
+ if(location.protocol==="file:"){
+   $("#localTestPanel").hidden=false;
+   $("#localScheduleFileAB").addEventListener("change",loadLocalTestSchedules);
+   $("#localScheduleFileCEP").addEventListener("change",loadLocalTestSchedules);
+   $("#localPlanFiles").addEventListener("change",loadLocalPlanFiles);
+   updateLocalPlanStatus();
+ }
+ $("#campusSelect").addEventListener("change",()=>{
+   $("#roomSearchInput").value="";updateRoomSearchClearButton();navHistory=[];selected=null;selectedBuilding=null;fillBuildings();fillFloors();syncNavState();updateScheduleControls();render();
+ });
+ $("#buildingSelect").addEventListener("change",()=>{
+   $("#roomSearchInput").value="";updateRoomSearchClearButton();
+   rememberLastNav();
+   selected=null;selectedBuilding=null;
+   fillFloors();
+   if($("#floorSelect").options.length)$("#floorSelect").selectedIndex=0;
+   syncNavState();
+   render();
+ });
+ $("#floorSelect").addEventListener("change",()=>{
+   $("#roomSearchInput").value="";updateRoomSearchClearButton();
+   rememberLastNav();
+   selected=null;selectedBuilding=null;
+   syncNavState();
+   render();
+ });
+ $("#roomFilterSelect").addEventListener("change",render);
+ $("#vacantOnlyInput").addEventListener("change",render);
+ $("#roomSearchInput").addEventListener("input",()=>{updateRoomSearchClearButton();render()});
+ $("#roomSearchInput").addEventListener("keydown",e=>{
+   if(e.key==="Enter"){e.preventDefault();render()}
+   if(e.key==="Escape"){e.preventDefault();clearRoomSearch()}
+ });
+ $("#clearRoomSearchBtn").addEventListener("click",clearRoomSearch);
+ updateRoomSearchClearButton();
+ $("#daySelect").addEventListener("change",()=>{updateDayNavButtons();render()});
+ $("#prevDayBtn").addEventListener("click",()=>shiftDay(-1));
+ $("#nextDayBtn").addEventListener("click",()=>shiftDay(1));
+ $("#timeInput").addEventListener("input",render);
+ $("#endTimeInput").addEventListener("input",render);
+ $("#backBtn").addEventListener("click",goBack);
+ $("#nowBtn").addEventListener("click",goTodayNow);
+ $("#noEndBtn").addEventListener("click",clearEndTime);
+ $("#singleMapFrame").addEventListener("wheel",e=>{
+   if($("#singleMapFrame").hidden)return;
+   e.preventDefault();
+   mapZoomAt(e.clientX,e.clientY,mapZoom*(e.deltaY<0?1.12:1/1.12));
+ },{passive:false});
+ $("#singleMapFrame").addEventListener("pointerdown",mapPointerDown);
+ $("#singleMapFrame").addEventListener("pointermove",mapPointerMove);
+ $("#singleMapFrame").addEventListener("pointerup",mapPointerEnd);
+ $("#singleMapFrame").addEventListener("pointercancel",mapPointerEnd);
+  $("#fullscreenMapBtn").addEventListener("click",openMapFullscreen);
+  $("#fullscreenCloseBtn").addEventListener("click",()=>closeMapFullscreen());
+  $("#fullscreenMapZoomInBtn").addEventListener("click",()=>mapZoomStep(1));
+  $("#fullscreenMapZoomOutBtn").addEventListener("click",()=>mapZoomStep(-1));
+ const floatingZoomPad=$("#mapFloatingZoomPad");
+ for(const type of ["pointerdown","pointermove","pointerup","pointercancel","click","dblclick","wheel"]){
+   floatingZoomPad.addEventListener(type,e=>{
+     e.stopPropagation();
+     if(type==="dblclick"||type==="wheel")e.preventDefault();
+   },type==="wheel"?{passive:false}:false);
+ }
+ $("#mapFloatingZoomInBtn").addEventListener("click",()=>mapZoomStep(1));
+ $("#mapFloatingZoomOutBtn").addEventListener("click",()=>mapZoomStep(-1));
+ $("#showMapOverlaysInput").addEventListener("change",()=>{
+   syncMobileOverlayControl();
+   updateMapOverlayVisibility();
+ });
+ $("#mobileShowMapOverlaysInput").addEventListener("change",()=>{
+   $("#showMapOverlaysInput").checked=$("#mobileShowMapOverlaysInput").checked;
+   syncMobileOverlayControl();
+   updateMapOverlayVisibility();
+ });
+ $("#fullscreenShowMapOverlaysInput").addEventListener("change",()=>{
+   $("#showMapOverlaysInput").checked=$("#fullscreenShowMapOverlaysInput").checked;
+   syncMobileOverlayControl();
+   updateMapOverlayVisibility();
+ });
+ $("#mobileBackBtn").addEventListener("click",mobileBack);
+ $("#mobileOptionsBtn").addEventListener("click",openMobileOptions);
+ $("#mobileOptionsDoneBtn").addEventListener("click",closeMobileOptions);
+ $("#mobileViewToggleBtn").addEventListener("click",toggleMobileMapList);
+ $("#mobileFullscreenBtn").addEventListener("click",openMapFullscreen);
+ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&mapFullscreen){e.preventDefault();closeMapFullscreen()}});
+ mobileMedia.addEventListener?.("change",()=>{
+   if(isMobileLayout()&&mobileView!=="room"&&mobileView!=="options")mobileView="list";
+   syncMobileUI();
+   if(isMobileLayout()&&mobileView==="map")refitMapAfterMobileReveal();
+   else requestAnimationFrame(()=>{updateMapFitScale(true);applyMapTransform()});
+ });
+ window.addEventListener("resize",()=>{updateMapFitScale(true);applyMapTransform();syncMobileUI()});
+ syncMobileOverlayControl();
+ syncMobileUI();
+}
+init();
+})();
+</script>
+</body>
+</html>
