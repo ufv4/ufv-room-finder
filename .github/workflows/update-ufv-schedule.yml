@@ -1,0 +1,283 @@
+name: Update UFV room schedule
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '5 6 * * *'
+      timezone: 'America/Vancouver'
+  push:
+    branches:
+      - main
+    paths:
+      - 'index.html'
+      - 'floorplans/**'
+      - 'searchResByOccurrence-AB.json'
+      - 'searchResByOccurrence-CEP.json'
+
+concurrency:
+  group: ufv-pages-update
+  cancel-in-progress: false
+
+jobs:
+  prepare-pages:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Refresh UFV campus occurrence caches
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+
+          const ENDPOINT = "https://roombookings.ufv.ca/Portal/syncApi/search/searchResByOccurrence";
+          const TIME_ZONE = "America/Vancouver";
+          const CAMPUSES = {
+            AB: {
+              name: "Abbotsford",
+              campusId: "558b5438-cf00-41a5-9a7a-99867dfe5416",
+              cacheFile: "searchResByOccurrence-AB.json"
+            },
+            CEP: {
+              name: "Chilliwack",
+              campusId: "a625d7bc-44c5-48d7-bb64-350befae3b8a",
+              cacheFile: "searchResByOccurrence-CEP.json"
+            }
+          };
+
+          function localDateParts(date = new Date()) {
+            const parts = new Intl.DateTimeFormat("en-CA", {
+              timeZone: TIME_ZONE,
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit"
+            }).formatToParts(date);
+            const get = type => Number(parts.find(p => p.type === type)?.value || 0);
+            return { year: get("year"), month: get("month"), day: get("day") };
+          }
+
+          function isoDate(year, month, day) {
+            return [
+              String(year).padStart(4, "0"),
+              String(month).padStart(2, "0"),
+              String(day).padStart(2, "0")
+            ].join("-");
+          }
+
+          function currentRange() {
+            const { year, month, day } = localDateParts();
+            let endMonth, endDay;
+            if (month <= 4) {
+              endMonth = 4;
+              endDay = 30;
+            } else if (month <= 8) {
+              endMonth = 8;
+              endDay = 31;
+            } else {
+              endMonth = 12;
+              endDay = 31;
+            }
+            return {
+              startISO: isoDate(year, month, day),
+              endISO: isoDate(year, endMonth, endDay)
+            };
+          }
+
+          function unixCalendarDate(iso) {
+            const [year, month, day] = iso.split("-").map(Number);
+            return Math.floor(Date.UTC(year, month - 1, day) / 1000);
+          }
+
+          function validResponse(data) {
+            return data?.success === true &&
+              data?.response &&
+              Array.isArray(data.response.headers) &&
+              Array.isArray(data.response.data);
+          }
+
+          function readGoodCache(file) {
+            if (!fs.existsSync(file)) return null;
+            try {
+              const data = JSON.parse(fs.readFileSync(file, "utf8"));
+              return validResponse(data) ? data : null;
+            } catch {
+              return null;
+            }
+          }
+
+          function alreadyRefreshedToday(cache, startISO, endISO) {
+            return cache?.cache?.refreshedLocalDate === startISO &&
+              cache?.cache?.startDate === startISO &&
+              cache?.cache?.endDate === endISO;
+          }
+
+          async function fetchCampus(campusKey, cfg, startISO, endISO) {
+            const payload = {
+              searchType: 5,
+              searchString: "",
+              resourceTypeIds: [],
+              campusId: cfg.campusId,
+              buildingIds: [],
+              startDate: unixCalendarDate(startISO),
+              endDate: unixCalendarDate(endISO),
+              startTime: 420,
+              endTime: 1320,
+              detailed: true,
+              byOccurrence: true
+            };
+
+            console.log(`Fetching ${cfg.name}: ${startISO} through ${endISO}`);
+
+            const response = await fetch(ENDPOINT, {
+              method: "POST",
+              headers: {
+                "Accept": "application/json, text/plain, */*",
+                "Content-Type": "application/json",
+                "Content-Language": "en"
+              },
+              body: JSON.stringify(payload),
+              signal: AbortSignal.timeout(60000)
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status} ${response.statusText}`);
+            }
+
+            let data;
+            try {
+              data = await response.json();
+            } catch (error) {
+              throw new Error(`invalid JSON: ${error.message}`);
+            }
+
+            if (!validResponse(data)) {
+              throw new Error("unexpected searchResByOccurrence response structure");
+            }
+
+            return { data, payload };
+          }
+
+          function writeCache(campusKey, cfg, data, payload, startISO, endISO) {
+            const cached = {
+              ...data,
+              cache: {
+                source: "searchResByOccurrence",
+                campus: campusKey,
+                campusName: cfg.name,
+                campusId: cfg.campusId,
+                endpoint: ENDPOINT,
+                timeZone: TIME_ZONE,
+                refreshedLocalDate: startISO,
+                fetchedAt: new Date().toISOString(),
+                startDate: startISO,
+                endDate: endISO,
+                startTimestamp: payload.startDate,
+                endTimestamp: payload.endDate,
+                startTime: payload.startTime,
+                endTime: payload.endTime,
+                byOccurrence: true
+              }
+            };
+
+            const tmp = `${cfg.cacheFile}.tmp`;
+            fs.writeFileSync(tmp, JSON.stringify(cached, null, 2) + "\n", "utf8");
+            fs.renameSync(tmp, cfg.cacheFile);
+
+            const reservations = data.response.data.length;
+            const occurrences = data.response.data.reduce(
+              (sum, row) => sum + (Array.isArray(row?.date) ? row.date.length : 0),
+              0
+            );
+            console.log(`Saved ${cfg.name}: ${reservations} reservation rows / ${occurrences} exact occurrences.`);
+          }
+
+          async function refreshCampus(campusKey, cfg, startISO, endISO) {
+            const previous = readGoodCache(cfg.cacheFile);
+
+            if (alreadyRefreshedToday(previous, startISO, endISO)) {
+              console.log(`${cfg.name}: already refreshed successfully today; using cache.`);
+              return true;
+            }
+
+            const previousUsable = !!previous &&
+              (!previous.cache?.endDate || String(previous.cache.endDate) >= startISO);
+
+            try {
+              const { data, payload } = await fetchCampus(campusKey, cfg, startISO, endISO);
+              writeCache(campusKey, cfg, data, payload, startISO, endISO);
+              return true;
+            } catch (error) {
+              if (previousUsable) {
+                console.warn(`${cfg.name}: refresh failed; keeping previous good cache. ${error.message}`);
+                return true;
+              }
+              console.warn(`${cfg.name}: refresh failed and no usable previous cache exists. ${error.message}`);
+              return false;
+            }
+          }
+
+          async function main() {
+            const { startISO, endISO } = currentRange();
+            const results = {};
+
+            for (const [campusKey, cfg] of Object.entries(CAMPUSES)) {
+              results[campusKey] = await refreshCampus(campusKey, cfg, startISO, endISO);
+            }
+
+            if (!Object.values(results).some(Boolean)) {
+              throw new Error("No usable UFV campus cache is available.");
+            }
+          }
+
+          main().catch(error => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Commit schedule caches if changed
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          if [ -z "$(git status --porcelain -- searchResByOccurrence-AB.json searchResByOccurrence-CEP.json)" ]; then
+            echo "UFV occurrence caches have not changed."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add searchResByOccurrence-AB.json searchResByOccurrence-CEP.json
+          git commit -m "Update UFV room schedules"
+          git pull --rebase
+          git push
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: '.'
+
+  deploy-pages:
+    needs: prepare-pages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
