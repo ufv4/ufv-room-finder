@@ -233,6 +233,8 @@ h1{font-size:clamp(1.7rem,4vw,2.45rem);margin:0;line-height:1.05;font-weight:750
 }
 .time-sub-button:hover{background:#f0f1ef}
 .time-sub-button:disabled{opacity:.45;cursor:not-allowed}
+.time-range-error{margin-top:8px;color:#9b3434;font-size:.76rem;font-weight:650;line-height:1.35}
+.time-range-error[hidden]{display:none!important}
 
 .workspace{
   background:transparent;
@@ -342,6 +344,10 @@ h1{font-size:clamp(1.7rem,4vw,2.45rem);margin:0;line-height:1.05;font-weight:750
   line-height:1.45
 }
 .building-expansion div+div{margin-top:2px}
+.hours-status{font-weight:600}
+.hours-status.open{color:#216f3c}
+.hours-status.closed{color:#9b3434}
+.hours-status.unknown{color:#59615c}
 .floor-list-details{
   margin:0 4px 0 24px;
   padding:3px 0 8px;
@@ -596,7 +602,13 @@ body.map-fullscreen-open{overflow:hidden}
   align-items:center;
   justify-content:flex-end;
   gap:7px;
-  flex:0 0 auto
+  flex:0 0 auto;
+  touch-action:manipulation
+}
+.map-fullscreen-controls button,
+.map-fullscreen-controls label,
+.map-fullscreen-zoom-controls{
+  touch-action:manipulation
 }
 .map-fullscreen-zoom-controls{display:flex;align-items:center;gap:6px}
 .map-fullscreen-canvas{
@@ -742,9 +754,9 @@ body.map-fullscreen-open{overflow:hidden}
 .mobile-checkbox-row input{width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;margin:0;padding:0;flex:0 0 16px}
 
 @media(min-width:701px){
-  /* Parent control gap is 7px; +25px makes the visible gap from − to Close exactly 32px,
-     matching one desktop square zoom button. */
-  .map-fullscreen #fullscreenCloseBtn{margin-left:25px}
+  /* Parent control gap is 7px; +93px makes the visible gap from − to Close 100px,
+     matching the desktop Close button width. */
+  .map-fullscreen #fullscreenCloseBtn{margin-left:93px}
 }
 @media(max-width:700px){
   .app{padding:12px 12px 82px}
@@ -794,9 +806,39 @@ body.map-fullscreen-open{overflow:hidden}
   .app[data-mobile-view="options"] .controls>label,
   .app[data-mobile-view="options"] .time-control,
   .app[data-mobile-view="options"] .filter-control,
-  .app[data-mobile-view="options"] .mobile-overlay-option{width:100%;max-width:none;flex:none}
+  .app[data-mobile-view="options"] .mobile-overlay-option{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+    flex:none
+  }
+  .app[data-mobile-view="options"] .time-control>label,
+  .app[data-mobile-view="options"] .filter-control>label{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box
+  }
   .app[data-mobile-view="options"] .controls select,
-  .app[data-mobile-view="options"] .controls input{width:100%;min-width:0}
+  .app[data-mobile-view="options"] .controls input{
+    width:100%;
+    min-width:0!important;
+    max-width:100%;
+    box-sizing:border-box
+  }
+  .app[data-mobile-view="options"] input[type="date"],
+  .app[data-mobile-view="options"] input[type="time"]{
+    inline-size:100%;
+    min-inline-size:0!important;
+    max-inline-size:100%
+  }
+  .app[data-mobile-view="options"] .time-sub-button{
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box
+  }
   .app[data-mobile-view="options"] .vacant-only-toggle{
     display:flex!important;
     align-items:center;
@@ -894,6 +936,23 @@ body.map-fullscreen-open{overflow:hidden}
   #mobileViewToggleBtn{grid-column:2}
   #mobileOptionsBtn{grid-column:3}
   #mobileFullscreenBtn{grid-column:4}
+  #mobileRoomSearchInput{
+    grid-column:4;
+    min-width:0;
+    width:100%;
+    min-height:40px;
+    height:40px;
+    padding:7px 7px;
+    border:1px solid #aeb5b0;
+    border-radius:0;
+    background:#fff;
+    color:var(--ink);
+    font:inherit;
+    font-size:.76rem;
+    box-sizing:border-box
+  }
+  #mobileRoomSearchInput:focus{outline:2px solid #7da1c9;outline-offset:1px}
+  #mobileRoomSearchInput[hidden]{display:none!important}
   .map-fullscreen-toolbar{display:contents}
   .map-fullscreen-title{
     order:1;
@@ -985,17 +1044,17 @@ body.map-fullscreen-open{overflow:hidden}
   <span id="localPlanStatus" class="local-plan-status">For local testing, choose all PNGs used by this index.html.</span>
 </section>
 <section class="controls-panel">
-<div class="mobile-options-header"><h2>Options</h2><button id="mobileOptionsDoneBtn" class="mobile-options-done" type="button">Save</button></div>
+<div class="mobile-options-header"><h2>Options</h2><button id="mobileOptionsDoneBtn" class="mobile-options-done" type="button">Done</button></div>
 <div class="controls">
 <label><span>Campus</span><select id="campusSelect"><option value="AB" selected>Abbotsford</option><option value="CEP">Chilliwack</option></select></label>
 <label><span>Building</span><select id="buildingSelect"></select></label>
 <label><span>Floor</span><select id="floorSelect"></select></label>
-<div class="filter-control"><label><span>Room type</span><select id="roomFilterSelect"><option value="all">All rooms</option><option value="classrooms">Classrooms</option><option value="labs">Labs</option><option value="meetings">Meeting Rooms</option></select></label><label class="vacant-only-toggle"><input id="vacantOnlyInput" type="checkbox"> <span>Show vacant only</span></label></div>
+<div class="filter-control"><label><span>Room type</span><select id="roomFilterSelect"><option value="all">All room types</option><option value="classrooms">Classrooms</option><option value="labs">Labs</option><option value="meetings">Meeting Rooms</option></select></label><label class="vacant-only-toggle"><input id="vacantOnlyInput" type="checkbox"> <span>Show vacant only</span></label></div>
 <label class="day-control"><span>Day</span><input id="daySelect" class="day-date-input" type="date" step="1" aria-label="Day"><span class="day-nav-buttons"><button id="prevDayBtn" class="day-nav-btn" type="button" aria-label="Previous day">←</button><button id="nextDayBtn" class="day-nav-btn" type="button" aria-label="Next day">→</button></span></label>
 <div class="time-control"><label><span>Start time</span><input id="timeInput" type="time" step="60"></label><button id="nowBtn" class="time-sub-button" type="button">Today and Now</button></div>
-<div class="time-control"><label><span>End time</span><input id="endTimeInput" type="time" step="60"></label><button id="noEndBtn" class="time-sub-button" type="button">No End Time</button></div>
+<div class="time-control"><label><span>End time (optional)</span><input id="endTimeInput" type="time" step="60" aria-describedby="timeRangeError"></label><button id="noEndBtn" class="time-sub-button" type="button">No End Time</button></div>
 <div class="mobile-overlay-option"><label class="mobile-checkbox-row"><input id="mobileShowMapOverlaysInput" type="checkbox" checked> <span>Show map overlays</span></label></div>
-</div></section>
+</div><div id="timeRangeError" class="time-range-error" role="alert" hidden>End time must be later than start time.</div></section>
 <section class="workspace">
   <div class="workspace-heading">
     <h2 id="workspaceTitle">Building A, Main Floor</h2>
@@ -1133,10 +1192,20 @@ function roomSearchAliases(room){
    normalizeRoomSearch(roomDisplayLabel(room).replace(/\s*-\s*/g," "))
  ].filter(Boolean))];
 }
+function searchableRoomsForCurrentScope(){
+ if(timeRangeInvalid())return[];
+ const building=String($("#buildingSelect")?.value||"").trim().toUpperCase();
+ const planIds=building==="OUTSIDE"
+   ?activePlans().map(([fid])=>fid)
+   :buildingPlans(building).map(([fid])=>fid);
+ const ids=new Set();
+ for(const fid of planIds)for(const id of Object.keys(planRoomEntries(fid)))ids.add(id);
+ return allRooms.filter(room=>ids.has(room.id));
+}
 function roomSearchResults(){
  const raw=$("#roomSearchInput")?.value||"",q=normalizeRoomSearch(raw);
- if(!q)return[];
- const candidates=allRooms.filter(room=>roomFloorId(room.id));
+ if(!q||timeRangeInvalid())return[];
+ const candidates=searchableRoomsForCurrentScope();
  const numericOnly=/^\d+$/.test(q);
  const ranked=candidates.map(room=>{
    const aliases=roomSearchAliases(room);
@@ -1152,8 +1221,9 @@ function roomSearchResults(){
 }
 function searchActive(){return normalizeRoomSearch($("#roomSearchInput")?.value||"").length>0}
 function updateRoomSearchClearButton(){
- const btn=$("#clearRoomSearchBtn");
+ const btn=$("#clearRoomSearchBtn"),desktopInput=$("#roomSearchInput"),mobileInput=$("#mobileRoomSearchInput");
  if(btn)btn.disabled=!searchActive();
+ if(desktopInput&&mobileInput&&mobileInput.value!==desktopInput.value)mobileInput.value=desktopInput.value;
 }
 function clearRoomSearch(){
  const input=$("#roomSearchInput");
@@ -1167,9 +1237,6 @@ function jumpToSearchRoom(id){
  const room=roomById.get(id),fid=roomFloorId(id);
  if(!room||!fid||!META[fid])return;
  rememberLastNav();
- $("#roomFilterSelect").value="all";
- $("#vacantOnlyInput").checked=false;
-
  selectedBuilding=null;
  $("#campusSelect").value=room.campus;
  fillBuildings();
@@ -1198,7 +1265,7 @@ function roomSearchRow(room,d){
 function renderSearchResults(){
  const d=curDate(),rs=roomSearchResults();
  renderRoomSummary(rs,d,false);
- $("#roomList").innerHTML=rs.length?rs.map(room=>roomSearchRow(room,d)).join(""):`<div class="search-empty">No matching rooms</div>`;
+ $("#roomList").innerHTML=rs.length?rs.map(room=>roomSearchRow(room,d)).join(""):"";
  $("#roomList").querySelectorAll("[data-search-id]").forEach(b=>b.addEventListener("click",()=>jumpToSearchRoom(b.dataset.searchId)));
 }
 const OVERLAY_ROOT=[2,3,4].includes(DATA.overlays?.version)&&DATA.overlays?.plans?DATA.overlays.plans:{};
@@ -1206,7 +1273,7 @@ const OTHER_OVERLAY_PLAN=Object.entries(OVERLAY_ROOT).find(([,p])=>String(p?.bui
 function virtualOtherIds(){return Array.isArray(OTHER_OVERLAY_PLAN?.virtualRooms)&&OTHER_OVERLAY_PLAN.virtualRooms.length?OTHER_OVERLAY_PLAN.virtualRooms:["ABY-YURT","ABS-INTG"]}
 const META=Object.fromEntries(Object.entries(OVERLAY_ROOT).map(([id,p])=>[id,{campusCode:inferPlanCampus(id,p),buildingCode:String(p?.building||"").trim().toUpperCase(),building:String(p?.buildingLabel||buildingLabel(p?.building)||id).trim(),floor:String(p?.floor||id),image:String(p?.image||`${id}.png`)}]));
 const $=s=>document.querySelector(s);let allRooms=[],classrooms=[],roomById=new Map(),scheduleByRoom=new Map(),scheduleOccurrences=[],scheduleDates=[],scheduleLoaded=false,scheduleRange=null,scheduleCampusState=new Map(Object.keys(CAMPUSES).map(k=>[k,{available:false,stale:false}])),selected=null,selectedBuilding=null,navHistory=[],lastNavState=null;
-let mapZoom=1,mapPanX=0,mapPanY=0,mapNaturalWidth=0,mapNaturalHeight=0,mapFitScale=1,mapPointers=new Map(),mapDragStart=null,mapPinchStart=null,mapDidDrag=false,mapSuppressClickUntil=0,mapFullscreen=false,mapFullscreenReturnScrollY=0,mapFullscreenOpener=null;
+let mapZoom=1,mapPanX=0,mapPanY=0,mapNaturalWidth=0,mapNaturalHeight=0,mapFitScale=1,mapPointers=new Map(),mapDragStart=null,mapPinchStart=null,mapDidDrag=false,mapSuppressClickUntil=0,mapFullscreen=false,mapFullscreenReturnScrollY=0,mapFullscreenOpener=null,preserveMapViewOnce=false;
 const mobileMedia=window.matchMedia("(max-width:700px)");
 let mobileView="list",mobileOptionsReturnView="list",mobileRoomReturnView="list",mobileRoomReturnScrollY=0,mobileOptionsReturnScrollY=0;
 const plans=DATA.plans||{};
@@ -1385,6 +1452,7 @@ async function loadLocalTestSchedules(){
  selectedBuilding=null;
  updateLastUpdatedLabel();
  updateScheduleControls();
+ updateTimeRangeError();
  render();
 }
 function esc(v){return String(v??"").replace(/[&<>\"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'\"':"&quot;","'":"&#39;"}[ch]))}
@@ -1410,12 +1478,19 @@ function buildSchedule(){
  for(const occurrence of scheduleOccurrences){if(occurrence.date<scheduleRange.startDate||occurrence.date>scheduleRange.endDate)continue;const ids=roomsInLocation(occurrence.location,occurrence.campus);for(const id of ids){if(!roomById.has(id))continue;if(!scheduleByRoom.has(id))scheduleByRoom.set(id,[]);scheduleByRoom.get(id).push({date:occurrence.date,start:occurrence.start,end:occurrence.end,title:occurrence.title,guid:occurrence.guid,campus:occurrence.campus,event:occurrence.event,activity:occurrence.activity,location:occurrence.location,reservationId:occurrence.reservationId,note:occurrence.note})}}
  for(const a of scheduleByRoom.values())a.sort((x,y)=>x.date.localeCompare(y.date)||x.start-y.start||x.end-y.end||x.guid.localeCompare(y.guid));
 }
-function parseDate(s){const[y,m,d]=s.split("-").map(Number);return new Date(Date.UTC(y,m-1,d))}function formatISO(d){return d.toISOString().slice(0,10)}function addDays(d,n){const x=new Date(d);x.setUTCDate(x.getUTCDate()+n);return x}function fmtDate(s,long=false){const opts=long?{weekday:"long",month:"short",day:"numeric",year:"numeric",timeZone:"UTC"}:{weekday:"short",month:"short",day:"numeric",year:"numeric",timeZone:"UTC"};return new Intl.DateTimeFormat(undefined,opts).format(parseDate(s))}function mins(v){const[h,m]=String(v||"00:00").split(":").map(Number);return h*60+m}function fmtMin(n){n=Math.max(0,Math.min(1440,Number(n)));let h=Math.floor(n/60),m=n%60;const period=h>=12?"PM":"AM";h=h%12||12;return`${h}:${String(m).padStart(2,"0")} ${period}`}
+function parseDate(s){const[y,m,d]=s.split("-").map(Number);return new Date(Date.UTC(y,m-1,d))}function formatISO(d){return d.toISOString().slice(0,10)}function addDays(d,n){const x=new Date(d);x.setUTCDate(x.getUTCDate()+n);return x}function fmtDate(s,long=false){const opts=long?{weekday:"long",month:"short",day:"numeric",year:"numeric",timeZone:"UTC"}:{weekday:"short",month:"short",day:"numeric",year:"numeric",timeZone:"UTC"};return new Intl.DateTimeFormat(undefined,opts).format(parseDate(s))}function mins(v){const[h,m]=String(v||"00:00").split(":").map(Number);return h*60+m}function fmtMin(n){n=Math.max(0,Math.min(1440,Number(n)));if(n===1440)return"12:00 AM";let h=Math.floor(n/60),m=n%60;const period=h>=12?"PM":"AM";h=h%12||12;return`${h}:${String(m).padStart(2,"0")} ${period}`}
 
+// Update this list when UFV publishes additional campus-wide closure dates.
+const CAMPUS_CLOSED_DATES=new Set([
+ "2026-09-07",
+ "2026-09-30",
+ "2026-10-12",
+ "2026-11-11"
+]);
 const BUILDING_HOURS={
  AB:{
   A:{weekday:[420,1320],saturday:[480,1080],sunday:null},B:{weekday:[420,1320],saturday:[480,1080],sunday:null},C:{weekday:[420,1320],saturday:[480,1080],sunday:null},D:{weekday:[420,1320],saturday:[480,1080],sunday:null},
-  E:{weekday:[420,1320],saturday:[480,900],sunday:[480,1200]},F:{closed:true,note:"Card access for staff"},G:{weekday:[420,1320],saturday:[480,1140],sunday:[690,1140]},J:{weekday:[480,1320],saturday:null,sunday:[960,1320]},K:{weekday:[420,1320],saturday:[480,1080],sunday:null},S:{weekday:[390,1320],saturday:[420,1320],sunday:[420,1320]}
+  E:{weekday:[420,1320],saturday:[480,900],sunday:[480,1200]},F:{closed:true,note:"Card access for staff"},G:{weekday:[420,1320],saturday:[480,1140],sunday:[690,1140]},J:{unknown:true},K:{weekday:[420,1320],saturday:[480,1080],sunday:null},S:{weekday:[390,1320],saturday:[420,1320],sunday:[420,1320]}
  },
  CEP:{
   A:{weekday:[420,1320],saturday:[480,1140],sunday:null},
@@ -1430,9 +1505,13 @@ const BUILDING_HOURS={
 };
 function buildingForRoom(id){const room=roomById.get(id);if(id==="ABS-INTG"||id==="ABY-YURT")return{campus:"AB",building:"OUTDOOR"};return{campus:room?.campus||"",building:buildingLabel(room?.building||"")}}
 function hoursInfoForBuilding(campus,building,d){
- const campusKey=String(campus||"").toUpperCase(),key=String(building||"").trim().toUpperCase(),cfg=BUILDING_HOURS[campusKey]?.[key],dow=parseDate(d).getUTCDay();
- if(!cfg)return{status:"unknown",hours:null,note:"Hours unknown"};
+ const campusKey=String(campus||"").toUpperCase(),key=String(building||"").trim().toUpperCase(),cfg=BUILDING_HOURS[campusKey]?.[key],dateKey=String(d||"").slice(0,10);
+ if(!cfg||cfg.unknown)return{status:"unknown",hours:null,note:"Hours unknown"};
+ // Campus-wide closure dates override normal/closed-access hours, but not unknown hours.
+ // A confirmed booking still takes precedence later in the room-status logic.
+ if(CAMPUS_CLOSED_DATES.has(dateKey))return{status:"closed",hours:null,note:""};
  if(cfg.closed)return{status:"closed",hours:null,note:cfg.note||""};
+ const dow=parseDate(d).getUTCDay();
  if(cfg.byDay&&Object.prototype.hasOwnProperty.call(cfg.byDay,dow)){
    const direct=cfg.byDay[dow];
    if(!direct)return{status:"closed",hours:null,note:cfg.note||""};
@@ -1475,13 +1554,15 @@ function selectedState(id,d){
  if(!scheduleAvailableForRoom(id))return{unknown:true,unavailable:true,closed:false,occupied:false,events:[],blocks:[]};
  const start=curMin(),end=endMin(),info=hoursForRoom(id,d);
  if(end===null)return stateAt(id,d,start);
- const hitBlocks=bookingBlocks(id,d).filter(b=>b.start<end&&b.end>start);
+ let effectiveEnd=end;
+ if(info.status==="open"&&start>=info.hours[0]&&start<info.hours[1])effectiveEnd=Math.min(end,info.hours[1]);
+ const hitBlocks=bookingBlocks(id,d).filter(b=>b.start<effectiveEnd&&b.end>start);
  const hits=hitBlocks.flatMap(b=>b.events);
  if(hitBlocks.length)return{unknown:false,closed:false,occupied:true,events:hits,blocks:hitBlocks};
  if(info.status==="unknown")return{unknown:true,closed:false,occupied:false,events:[],blocks:[]};
  if(info.status==="closed")return{unknown:false,closed:true,occupied:false,events:[],blocks:[]};
  const h=info.hours;
- if(start<h[0]||start>=h[1]||end<=start||end>h[1])return{unknown:false,closed:true,occupied:false,events:[],blocks:[]};
+ if(start<h[0]||start>=h[1]||end<=start)return{unknown:false,closed:true,occupied:false,events:[],blocks:[]};
  return{unknown:false,closed:false,occupied:false,events:[],blocks:[]};
 }
 function stateKind(s){return s.occupied?"busy":s.unknown?"unknown":s.closed?"closed":"free"}
@@ -1515,19 +1596,13 @@ function bookedUntil(id,d,start,selected){
 }
 function roomListStatus(id,d){
  if(!scheduleAvailableForRoom(id))return{kind:"unknown",text:"Schedule unavailable"};
- const m=curMin(),selected=selectedState(id,d),point=stateAt(id,d,m),info=hoursForRoom(id,d);
+ const m=curMin(),selected=selectedState(id,d),info=hoursForRoom(id,d);
  if(selected.occupied){
    const until=bookedUntil(id,d,m,selected);
    return{kind:"busy",text:until===null?"Booked":`Booked until ${fmtMin(until)}`};
  }
  if(selected.unknown)return{kind:"unknown",text:"Hours unknown"};
- if(selected.closed){
-   if(info.status==="open"&&!point.closed&&info.hours&&endMin()!==null&&endMin()>info.hours[1])
-     return{kind:"closed",text:`Closed after ${fmtMin(info.hours[1])}`};
-   const next=nextOpeningForRoom(id,d,m);
-   if(!next)return{kind:"closed",text:info.note?`Closed. ${info.note}`:"Closed"};
-   return{kind:"closed",text:`Closed until ${next.offset?`${weekdayName(next.date)} `:""}${fmtMin(next.minute)}`};
- }
+ if(selected.closed)return{kind:"closed",text:"Closed"};
  const close=info.hours?.[1];
  const next=bookingBlocks(id,d).find(b=>b.start>m&&(close==null||b.start<close));
  const until=next?next.start:close;
@@ -1557,18 +1632,24 @@ function daySegments(id,d){
  }
  const[open,close]=info.hours;
  const ev=allEvents.filter(e=>e.end>open&&e.start<close);
- if(!ev.length)return[{kind:"free",start:open,end:close,title:"No bookings scheduled"}];
- const out=[];let cursor=open,hasPreviousBooking=false;
- for(const e of ev){
-   const start=Math.max(open,e.start),end=Math.min(close,e.end);
-   const gap=start-cursor;
-   const minimumUsefulGap=hasPreviousBooking?TURNAROUND:0;
-   if(gap>minimumUsefulGap)out.push({kind:"free",start:cursor,end:start,title:"No bookings scheduled"});
-   out.push({kind:"busy",start,end,title:e.title});
-   cursor=Math.max(cursor,end);
-   hasPreviousBooking=true;
+ const out=[];
+ if(open>0)out.push({kind:"closed",start:0,end:open,title:"Closed"});
+ if(!ev.length){
+   out.push({kind:"free",start:open,end:close,title:"No bookings scheduled"});
+ }else{
+   let cursor=open,hasPreviousBooking=false;
+   for(const e of ev){
+     const start=Math.max(open,e.start),end=Math.min(close,e.end);
+     const gap=start-cursor;
+     const minimumUsefulGap=hasPreviousBooking?TURNAROUND:0;
+     if(gap>minimumUsefulGap)out.push({kind:"free",start:cursor,end:start,title:"No bookings scheduled"});
+     out.push({kind:"busy",start,end,title:e.title});
+     cursor=Math.max(cursor,end);
+     hasPreviousBooking=true;
+   }
+   if(close-cursor>TURNAROUND)out.push({kind:"free",start:cursor,end:close,title:"No bookings scheduled"});
  }
- if(close-cursor>TURNAROUND)out.push({kind:"free",start:cursor,end:close,title:"No bookings scheduled"});
+ if(close<1440)out.push({kind:"closed",start:close,end:1440,title:"Closed"});
  return out;
 }
 function currentRoomFilter(){return $("#roomFilterSelect")?.value||"all"}
@@ -1587,6 +1668,7 @@ function roomPassesVacantOnly(room,d=curDate()){
  return!s.occupied&&!s.closed&&!s.unknown;
 }
 function floorRooms(fid,mode=currentRoomFilter()){
+ if(timeRangeInvalid())return[];
  const ids=new Set(Object.keys(planRoomEntries(fid))),outside=META[fid]?.buildingCode==="OUTSIDE";
  const priority=id=>id==="ABY-YURT"?0:id==="ABS-INTG"?1:2;
  return allRooms.filter(r=>{
@@ -1601,6 +1683,13 @@ function floorRooms(fid,mode=currentRoomFilter()){
    return a.room.localeCompare(b.room,undefined,{numeric:true});
  });
 }function curFloor(){return $("#floorSelect").value}function curDate(){const input=$("#daySelect"),v=input.value;if(!v)return"";if(input.min&&v<input.min)return input.min;if(input.max&&v>input.max)return input.max;return v}function curMin(){return mins($("#timeInput").value)}function endMin(){const v=$("#endTimeInput").value;return v?mins(v):null}
+function timeRangeInvalid(){const end=endMin();return end!==null&&end<=curMin()}
+function updateTimeRangeError(){
+ const invalid=timeRangeInvalid(),error=$("#timeRangeError"),endInput=$("#endTimeInput");
+ if(error)error.hidden=!invalid;
+ if(endInput)endInput.setAttribute("aria-invalid",invalid?"true":"false");
+ return invalid;
+}
 function activePlans(){const campus=activeCampus();return Object.entries(META).filter(([id,m])=>plans[id]&&(campus===ALL_CAMPUSES||m.campusCode===campus))}
 function isAllCampuses(){return activeCampus()===ALL_CAMPUSES}
 const ALL_FLOORS_ID="__ALL_FLOORS__",OTHER_FLOOR_ID="__OTHER__";
@@ -1622,6 +1711,7 @@ function buildingLinksForFloor(fid){
  }).filter(x=>x.code!=="OTHER"&&x.points.length>=3).sort((a,b)=>a.label.localeCompare(b.label,undefined,{numeric:true}));
 }
 function uniqueRoomsFromPlanIds(planIds,mode=currentRoomFilter()){
+ if(timeRangeInvalid())return[];
  const ids=new Set();
  for(const fid of planIds)for(const id of Object.keys(planRoomEntries(fid)))ids.add(id);
  const priority=id=>id==="ABY-YURT"?0:id==="ABS-INTG"?1:2;
@@ -1632,10 +1722,12 @@ function uniqueRoomsFromPlanIds(planIds,mode=currentRoomFilter()){
  });
 }
 function otherRooms(mode=currentRoomFilter()){
+ if(timeRangeInvalid())return[];
  if(mode!=="all")return[];
  return virtualOtherIds().map(id=>roomById.get(id)).filter(Boolean).filter(room=>roomPassesVacantOnly(room));
 }
 function campusRooms(mode=currentRoomFilter()){
+ if(timeRangeInvalid())return[];
  const base=uniqueRoomsFromPlanIds(activePlans().map(([id])=>id),mode),seen=new Set(base.map(r=>r.id));
  for(const id of ["ABY-YURT","ABS-INTG"]){
    const room=roomById.get(id);
@@ -1684,15 +1776,21 @@ function statusParts(counts,withRooms=false,html=false){
  add(counts.unknown,"unknown","status-unknown");
  return parts;
 }
-function buildingHoursLine(code,d,campus=activeCampus()){
+function buildingHoursStatus(code,d,campus=activeCampus()){
  const label=buildingLabel(code),info=hoursInfoForBuilding(campus,label,d);
- if(info.status==="unknown")return"Hours unknown";
- if(info.status==="closed")return info.note?`Closed. ${info.note}`:"Closed";
- return`Open ${fmtMin(info.hours[0])} - ${fmtMin(info.hours[1])}`;
+ if(info.status==="unknown")return{kind:"unknown",text:"Hours unknown"};
+ if(info.status==="closed")return{kind:"closed",text:"Closed"};
+ const m=curMin();
+ if(m<info.hours[0]||m>=info.hours[1])return{kind:"closed",text:"Closed"};
+ return{kind:"open",text:`Open until ${fmtMin(info.hours[1])}`};
+}
+function buildingHoursStatusHtml(status){
+ if(!status)return"";
+ return`<span class="hours-status ${esc(status.kind)}">${esc(status.text)}</span>`;
 }
 function buildingExpansionHtml(code,d){
- const rs=buildingRooms(code),total=rs.length;
- const lines=[esc(buildingHoursLine(code,d,activeCampus())),`<span class="status-count">${esc(`${total} ${total===1?"room":"rooms"} found`)}</span>`];
+ const rs=buildingRooms(code),total=rs.length,status=buildingHoursStatus(code,d,activeCampus());
+ const lines=[buildingHoursStatusHtml(status),`<span class="status-count">${esc(`${total} ${total===1?"room":"rooms"} found`)}</span>`];
  if(hasScheduleData()){
    const parts=statusParts(countRoomStates(rs,d),false,true);
    if(parts.length)lines.push(parts.join(", "));
@@ -1725,12 +1823,13 @@ function syncMobileUI(){
  }
  nav.hidden=mobileView==="options";
  const roomMode=mobileView==="room",mapMode=mobileView==="map",listMode=mobileView==="list",mapVisible=mapMode&&frame?.hidden!==true;
- const back=$("#mobileBackBtn"),options=$("#mobileOptionsBtn"),toggle=$("#mobileViewToggleBtn"),fullscreen=$("#mobileFullscreenBtn");
+ const back=$("#mobileBackBtn"),options=$("#mobileOptionsBtn"),toggle=$("#mobileViewToggleBtn"),fullscreen=$("#mobileFullscreenBtn"),search=$("#mobileRoomSearchInput");
  back.hidden=false;
  back.disabled=roomMode?false:navHistory.length===0;
  options.hidden=roomMode;
  toggle.hidden=roomMode;
  fullscreen.hidden=!mapVisible;
+ if(search)search.hidden=!listMode;
  if(zoomPad)zoomPad.hidden=!mapVisible;
  toggle.textContent=listMode?"Map View":"List View";
  updateMapZoomControls();
@@ -1814,12 +1913,40 @@ function planHeading(meta){
    :`${campus}, Building ${meta.building}, ${meta.floor}`;
 }
 function planAlt(meta){return meta?.buildingCode==="OUTSIDE"?`UFV ${campusName(meta?.campusCode)} campus map ${meta.floor}`:`UFV ${campusName(meta?.campusCode)} Building ${meta.building} ${meta.floor} floor plan`}
-function otherTitle(when){return`${campusName(activeCampus())}, Other | ${when}`}
+const ROOM_FILTER_TITLE_LABELS={all:"All room types",classrooms:"Classrooms",labs:"Labs",meetings:"Meeting Rooms"};
+function roomFilterTitleLabel(){return ROOM_FILTER_TITLE_LABELS[currentRoomFilter()]||"All room types"}
+function selectedWhenText(noSchedule=false){
+ if(noSchedule)return"No schedule found";
+ const d=curDate()||localTodayISO(),start=curMin(),end=endMin();
+ return end!==null?`${fmtDate(d,true)}, ${fmtMin(start)} - ${fmtMin(end)}`:`${fmtDate(d,true)}, ${fmtMin(start)}`;
+}
+function searchScopeTitle(){
+ const campus=campusName(activeCampus()),building=String($("#buildingSelect")?.value||"").trim().toUpperCase();
+ if(building==="OUTSIDE")return`Search results, ${campus}, All buildings/floors, All room types`;
+ if(building==="OTHER")return`Search results, ${campus}, Other, All room types`;
+ return`Search results, ${campus}, Building ${buildingLabel(building)}, All floors, All room types`;
+}
+function normalScopeTitle(meta,{allFloors=false,other=false}={}){
+ const campus=campusName(meta?.campusCode||activeCampus()),parts=[campus];
+ if(other)parts.push("Other");
+ else if(allFloors)parts.push(`Building ${meta?.building||buildingLabel($("#buildingSelect")?.value)}`,"All floors");
+ else if(meta?.buildingCode==="OUTSIDE")parts.push("Outside",meta.floor);
+ else parts.push(`Building ${meta?.building||buildingLabel($("#buildingSelect")?.value)}`,meta?.floor||"All floors");
+ parts.push(roomFilterTitleLabel());
+ if(vacantOnlyEnabled())parts.push("Vacant only");
+ return parts.join(", ");
+}
+function workspaceTitleText(meta,opts={}){
+ const left=searchActive()?searchScopeTitle():normalScopeTitle(meta,opts);
+ return`${left} | ${selectedWhenText(!!opts.noSchedule)}`;
+}
+function otherTitle(when){return`${campusName(activeCampus())}, Other, ${roomFilterTitleLabel()}${vacantOnlyEnabled()?", Vacant only":""} | ${when}`}
 function showNoVisualMap(){
  resetMapView();
  $("#mapToolbar").hidden=false;
  $("#mapZoomControls").hidden=true;
  $("#overlayToggleWrap").hidden=true;
+ $("#fullscreenMapBtn").hidden=true;
  $("#mapLegend").hidden=true;
  $("#singleMapFrame").hidden=true;
  $("#allFloorsGrid").hidden=true;
@@ -1901,9 +2028,10 @@ function shiftDay(delta){
 }
 function setTime(){const p=vancouverNowParts();$("#timeInput").value=`${String(p.hour).padStart(2,"0")}:${String(p.minute).padStart(2,"0")}`}
 function clearEndTime(){ $("#endTimeInput").value=""; render() }
-function goTodayNow(){const today=localTodayISO(),input=$("#daySelect");if(today>=input.min&&today<=input.max)input.value=today;setTime();selected=null;selectedBuilding=null;render()}
+function goTodayNow(){const today=localTodayISO(),input=$("#daySelect");if(today>=input.min&&today<=input.max)input.value=today;setTime();$("#endTimeInput").value="";selected=null;selectedBuilding=null;render()}
 function selectRoom(id){
  if(mapFullscreen){closeMapFullscreen(()=>selectRoom(id));return}
+ preserveMapViewOnce=true;
  selectedBuilding=null;
  selected=id;
  if(isMobileLayout()){
@@ -1917,11 +2045,12 @@ function selectRoom(id){
  render();
  requestAnimationFrame(()=>$("#detailsPanel").scrollIntoView({behavior:"smooth",block:"start"}));
 }
-function renderRoomSummary(rs,d,outside=false){
+function renderRoomSummary(rs,d,outside=false,hoursStatus=null){
  const summary=$("#roomSummary");
  if(!summary)return;
- const total=rs.length;
- const lines=[`<span class="status-count">${esc(`${total} ${total===1?"room":"rooms"} found`)}</span>`];
+ const total=rs.length,lines=[];
+ if(hoursStatus)lines.push(buildingHoursStatusHtml(hoursStatus));
+ lines.push(`<span class="status-count">${esc(`${total} ${total===1?"room":"rooms"} found`)}</span>`);
  if(hasScheduleData()){
    const parts=statusParts(countRoomStates(rs,d),false,true);
    if(parts.length)lines.push(parts.join(", "));
@@ -1943,7 +2072,7 @@ function renderRoomList(){
  }
  if(f===ALL_FLOORS_ID){
    const floors=buildingPlans(),rs=buildingRooms($("#buildingSelect").value);
-   renderRoomSummary(rs,d,false);
+   renderRoomSummary(rs,d,false,buildingHoursStatus($("#buildingSelect").value,d,activeCampus()));
    $("#roomList").innerHTML=floors.map(([fid,meta])=>`<div class="floor-list-item navigation-list-item" data-floor="${esc(fid)}" role="button" tabindex="0" aria-label="${esc(meta.floor)}: view floor"><div class="room-list-button floor-link-label"><span class="building-link-square" aria-hidden="true"></span><span>${esc(meta.floor)}</span></div>${floorDetailsHtml(fid,d)}</div>`).join("");
    $("#roomList").querySelectorAll(".floor-list-item[data-floor]").forEach(item=>{
      const choose=()=>selectFloor(item.dataset.floor);
@@ -1975,7 +2104,10 @@ function renderOne(room){
  const d=curDate(),segments=daySegments(room.id,d),capacity=String(room.capacity||"").trim();
  const timeline=segments.map(seg=>{
    if(seg.kind==="unknown")return`<div class="event-row unknown-row"><div class="event-time">Hours</div><div class="event-name unknown">${esc(seg.title)}</div></div>`;
-   if(seg.kind==="closed")return`<div class="event-row closed-row"><div class="event-time">Closed</div><div class="event-name closed">${esc(seg.title)}</div></div>`;
+   if(seg.kind==="closed"){
+     const closedTime=Number.isFinite(seg.start)&&Number.isFinite(seg.end)?`${fmtMin(seg.start)} - ${fmtMin(seg.end)}`:"Closed";
+     return`<div class="event-row closed-row"><div class="event-time">${esc(closedTime)}</div><div class="event-name closed">${esc(seg.title)}</div></div>`;
+   }
    const time=`${fmtMin(seg.start)} - ${fmtMin(seg.end)}`;
    if(seg.kind==="free")return`<div class="event-row free-row"><div class="event-time">${esc(time)}</div><div class="event-name free">No bookings scheduled</div></div>`;
    return`<div class="event-row busy-row"><div class="event-time">${esc(time)}</div><div class="event-name busy">${esc(seg.title)}</div></div>`;
@@ -2201,15 +2333,15 @@ function mapPointerEnd(e){
  }
 }
 function renderAllFloorsMap(noSchedule=false){
- const floors=buildingPlans(),code=$("#buildingSelect").value,meta=floors[0]?.[1],d=curDate()||localTodayISO(),m=curMin(),end=endMin();
+ const floors=buildingPlans(),code=$("#buildingSelect").value,meta=floors[0]?.[1];
  resetMapView();
  $("#mapToolbar").hidden=false;
  $("#mapZoomControls").hidden=true;
  $("#overlayToggleWrap").hidden=true;
+ $("#fullscreenMapBtn").hidden=true;
  $("#mapLegend").hidden=true;
  updateWorkspaceHelp(meta,true);
- const when=noSchedule?"No schedule found":end!==null&&end>m?`${fmtDate(d,true)}, ${fmtMin(m)} - ${fmtMin(end)}`:`${fmtDate(d,true)}, ${fmtMin(m)}`;
- $("#workspaceTitle").textContent=`${campusName(meta?.campusCode||activeCampus())}, Building ${esc(meta?.building||buildingLabel(code))}, All floors | ${when}`;
+ $("#workspaceTitle").textContent=workspaceTitleText(meta,{allFloors:true,noSchedule});
  $("#singleMapFrame").hidden=true;
  const grid=$("#allFloorsGrid");
  grid.hidden=false;
@@ -2222,24 +2354,24 @@ function renderMap(){
  const f=curFloor(),d=curDate(),m=curMin(),end=endMin();
  if(f===OTHER_FLOOR_ID){
    $("#workspaceHelp").textContent="Click a room from the list to view the full room availability for the selected day.";
-   const when=end!==null&&end>m?`${fmtDate(d,true)}, ${fmtMin(m)} - ${fmtMin(end)}`:`${fmtDate(d,true)}, ${fmtMin(m)}`;
-   $("#workspaceTitle").textContent=otherTitle(when);
+   $("#workspaceTitle").textContent=workspaceTitleText(null,{other:true});
    showNoVisualMap();
    return;
  }
  if(f===ALL_FLOORS_ID){renderAllFloorsMap(false);return}
- const meta=META[f],img=$("#floorImage"),svg=$("#roomOverlay"),rs=floorRooms(f);
- resetMapView();
+ const meta=META[f],img=$("#floorImage"),svg=$("#roomOverlay"),rs=searchActive()?roomSearchResults().filter(r=>Object.prototype.hasOwnProperty.call(planRoomEntries(f),r.id)):floorRooms(f);
+ const keepMapView=preserveMapViewOnce;preserveMapViewOnce=false;
+ if(!keepMapView)resetMapView();
  $("#mapToolbar").hidden=false;
  $("#mapZoomControls").hidden=false;
  $("#overlayToggleWrap").hidden=false;
+ $("#fullscreenMapBtn").hidden=false;
  $("#mapLegend").hidden=false;
  $("#singleMapFrame").hidden=false;
  $("#allFloorsGrid").hidden=true;
  updateMapOverlayVisibility();
  updateWorkspaceHelp(meta);
- const when=end!==null&&end>m?`${fmtDate(d,true)}, ${fmtMin(m)} - ${fmtMin(end)}`:`${fmtDate(d,true)}, ${fmtMin(m)}`;
- $("#workspaceTitle").textContent=`${planHeading(meta)} | ${when}`;
+ $("#workspaceTitle").textContent=workspaceTitleText(meta);
  const draw=()=>{
    setMapNativeSize(img.naturalWidth,img.naturalHeight);
    svg.setAttribute("viewBox",`0 0 ${img.naturalWidth} ${img.naturalHeight}`);
@@ -2290,8 +2422,8 @@ function renderNoSchedule(){
    if(f===ALL_FLOORS_ID)renderAllFloorsMap(true);
    else if(f===OTHER_FLOOR_ID)showNoVisualMap();
    else{
-     $("#workspaceTitle").textContent=`${planHeading(meta)} | No schedule found`;
-     $("#mapToolbar").hidden=false;$("#mapZoomControls").hidden=false;$("#overlayToggleWrap").hidden=false;$("#mapLegend").hidden=false;$("#singleMapFrame").hidden=false;$("#allFloorsGrid").hidden=true;updateMapOverlayVisibility();
+     $("#workspaceTitle").textContent=workspaceTitleText(meta,{noSchedule:true});
+     $("#mapToolbar").hidden=false;$("#mapZoomControls").hidden=false;$("#overlayToggleWrap").hidden=false;$("#fullscreenMapBtn").hidden=false;$("#mapLegend").hidden=false;$("#singleMapFrame").hidden=false;$("#allFloorsGrid").hidden=true;updateMapOverlayVisibility();
    }
    $("#detailsPanel").hidden=false;
    $("#detailsPanel").innerHTML=`<div class="details-top"><div><h2>No schedule found</h2></div></div>`;
@@ -2302,7 +2434,7 @@ function renderNoSchedule(){
    const rs=otherRooms();
    renderRoomSummary(rs,d,false);
    $("#workspaceHelp").textContent="Click a room from the list to view the full room availability for the selected day.";
-   $("#workspaceTitle").textContent="Other | No schedule found";
+   $("#workspaceTitle").textContent=workspaceTitleText(null,{other:true,noSchedule:true});
    $("#roomList").innerHTML=rs.map(room=>`<div class="room-list-button" aria-disabled="true"><span class="room-status-square closed" aria-hidden="true"></span><span>${esc(roomDisplayLabel(room))}</span></div>`).join("");
    showNoVisualMap();
    $("#detailsPanel").hidden=false;
@@ -2311,7 +2443,7 @@ function renderNoSchedule(){
  }
  if(f===ALL_FLOORS_ID){
    selectedBuilding=null;
-   renderRoomSummary(buildingRooms($("#buildingSelect").value),d,false);
+   renderRoomSummary(buildingRooms($("#buildingSelect").value),d,false,buildingHoursStatus($("#buildingSelect").value,d,activeCampus()));
    const floors=buildingPlans();
    $("#roomList").innerHTML=floors.map(([fid,meta])=>`<div class="floor-list-item navigation-list-item" data-floor="${esc(fid)}" role="button" tabindex="0" aria-label="${esc(meta.floor)}: view floor"><div class="room-list-button floor-link-label"><span class="building-link-square" aria-hidden="true"></span><span>${esc(meta.floor)}</span></div>${floorDetailsHtml(fid,d)}</div>`).join("");
    $("#roomList").querySelectorAll(".floor-list-item[data-floor]").forEach(item=>{
@@ -2329,13 +2461,14 @@ function renderNoSchedule(){
  $("#mapToolbar").hidden=false;
  $("#mapZoomControls").hidden=false;
  $("#overlayToggleWrap").hidden=false;
+ $("#fullscreenMapBtn").hidden=false;
  $("#mapLegend").hidden=false;
  $("#singleMapFrame").hidden=false;
  $("#allFloorsGrid").hidden=true;
  updateMapOverlayVisibility();
  updateWorkspaceHelp(meta);
  renderRoomSummary(summaryRoomsForFloor(f),d,outside);
- $("#workspaceTitle").textContent=`${planHeading(meta)} | No schedule found`;
+ $("#workspaceTitle").textContent=workspaceTitleText(meta,{noSchedule:true});
  const linkHtml=links.map(x=>`<div class="building-list-item navigation-list-item" data-building="${esc(x.code)}" role="button" tabindex="0" aria-label="${esc(x.label)}: jump to building"><div class="room-list-button building-link-label"><span class="building-link-square" aria-hidden="true"></span><span>${esc(x.label)}</span></div>${buildingExpansionHtml(x.code,d)}</div>`).join("");
  const roomHtml=rs.map(room=>`<div class="room-list-button room-entry" aria-disabled="true"><span class="room-status-square closed" aria-hidden="true"></span><span class="room-list-text"><span class="room-list-name">${esc(roomDisplayLabel(room))}</span><span class="room-list-until unknown">Schedule unavailable</span></span></div>`).join("");
  $("#roomList").innerHTML=linkHtml+roomHtml;
@@ -2366,12 +2499,14 @@ function renderNoSchedule(){
 }
 function render(){
  try{
+   const invalidRange=updateTimeRangeError();
+   if(invalidRange){selected=null;selectedBuilding=null}
    if(isAllCampuses()){renderAllCampusesView(!hasScheduleData());return}
    if(!curFloor())return;
    if(curFloor()===OTHER_FLOOR_ID){
      selectedBuilding=null;
      if(!hasScheduleData()){renderNoSchedule();return}
-     if(selected&&!otherRooms().some(r=>r.id===selected))selected=null;
+     if(selected&&!searchActive()&&!otherRooms().some(r=>r.id===selected))selected=null;
      renderRoomList();
      renderDetails();
      renderMap();
@@ -2388,7 +2523,7 @@ function render(){
    }
    if(META[curFloor()]?.buildingCode!=="OUTSIDE")selectedBuilding=null;
    if(!hasScheduleData()){renderNoSchedule();return}
-   if(selected&&!floorRooms(curFloor()).some(r=>r.id===selected))selected=null;
+   if(selected&&!searchActive()&&!floorRooms(curFloor()).some(r=>r.id===selected))selected=null;
    renderRoomList();
    renderDetails();
    renderMap();
@@ -2440,6 +2575,16 @@ async function init(){
  $("#roomFilterSelect").addEventListener("change",render);
  $("#vacantOnlyInput").addEventListener("change",render);
  $("#roomSearchInput").addEventListener("input",()=>{updateRoomSearchClearButton();render()});
+ const mobileRoomSearchInput=$("#mobileRoomSearchInput");
+ mobileRoomSearchInput?.addEventListener("input",()=>{
+   $("#roomSearchInput").value=mobileRoomSearchInput.value;
+   updateRoomSearchClearButton();
+   render();
+ });
+ mobileRoomSearchInput?.addEventListener("keydown",e=>{
+   if(e.key==="Enter"){e.preventDefault();render()}
+   if(e.key==="Escape"){e.preventDefault();$("#roomSearchInput").value="";mobileRoomSearchInput.value="";updateRoomSearchClearButton();render();mobileRoomSearchInput.focus()}
+ });
  $("#roomSearchInput").addEventListener("keydown",e=>{
    if(e.key==="Enter"){e.preventDefault();render()}
    if(e.key==="Escape"){e.preventDefault();clearRoomSearch()}
@@ -2467,6 +2612,10 @@ async function init(){
   $("#fullscreenCloseBtn").addEventListener("click",()=>closeMapFullscreen());
   $("#fullscreenMapZoomInBtn").addEventListener("click",()=>mapZoomStep(1));
   $("#fullscreenMapZoomOutBtn").addEventListener("click",()=>mapZoomStep(-1));
+ const fullscreenControls=$(".map-fullscreen-controls");
+ if(fullscreenControls){
+   fullscreenControls.addEventListener("dblclick",e=>{e.preventDefault();e.stopPropagation()});
+ }
  const floatingZoomPad=$("#mapFloatingZoomPad");
  for(const type of ["pointerdown","pointermove","pointerup","pointercancel","click","dblclick","wheel"]){
    floatingZoomPad.addEventListener(type,e=>{
